@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useRouter } from 'next/router';
 import { useState } from 'react';
 import Icon from '../../components/common/Icon';
+import ThemeToggle from '../../components/common/ThemeToggle';
 
 type LoginError = {
    type: string,
@@ -65,6 +66,9 @@ const Login: NextPage = () => {
          <Head>
             <title>Login - SerpBear</title>
          </Head>
+         <div className='absolute top-4 right-4 z-10'>
+            <ThemeToggle />
+         </div>
          <div className='flex items-center justify-center w-full h-screen'>
             <div className='w-80 mt-[-300px]'>
                <h3 className="py-7 text-2xl font-bold text-blue-700 text-center">

@@ -43,6 +43,9 @@ TODO
 #database
 data/
 
+# graphify knowledge graph (generated locally)
+graphify-out/
+
 #copilot
 .github/*.md.env
 *.pem
