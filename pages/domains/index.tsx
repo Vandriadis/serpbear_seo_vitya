@@ -124,8 +124,10 @@ const Domains: NextPage = () => {
                      className="ml-2 inline-flex items-center py-2 text-slate-600 font-bold text-sm hover:text-indigo-600"
                      onClick={() => setShowCreateTags(true)}
                   >
-                     <span className="text-center leading-4 mr-2 inline-flex items-center justify-center rounded-full w-7 h-7 bg-indigo-50 text-indigo-600">
-                        <Icon type="tags" size={14} />
+                     <span
+                        className="text-center leading-4 mr-2 inline-flex items-center justify-center
+                           rounded-full w-7 h-7 bg-indigo-50 text-indigo-600"
+                     >                        <Icon type="tags" size={14} />
                      </span>
                      <i className="not-italic hidden lg:inline-block">Create Tags</i>
                   </button>

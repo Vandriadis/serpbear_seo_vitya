@@ -52,7 +52,11 @@ const DomainItem = ({
                      {tags.length > 0 && (
                         <div className="mt-1.5 flex flex-wrap gap-1">
                            {tags.map((tag) => (
-                              <span key={tag} className="inline-flex items-center text-[10px] leading-none px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 border border-indigo-100">
+                              <span
+                                 key={tag}
+                                 className="inline-flex items-center text-[10px] leading-none px-1.5 py-0.5
+                                    rounded bg-indigo-50 text-indigo-600 border border-indigo-100"
+                              >
                                  {tag}
                               </span>
                            ))}
@@ -81,7 +85,10 @@ const DomainItem = ({
                      <div className="bg-indigo-50 p-0.5 px-1.5 text-[10px] rounded-full absolute ml-2 mt-[-6px] z-[1]">
                         <Icon type="tracking" size={11} color="#364aff" /> Tracker
                      </div>
-                     <div className="dom_stats flex flex-1 font-semibold text-lg p-2.5 pt-3.5 rounded border border-[#E9EBFF] text-center h-full items-center">
+                     <div
+                        className="dom_stats flex flex-1 font-semibold text-lg p-2.5 pt-3.5
+                           rounded border border-[#E9EBFF] text-center h-full items-center"
+                     >
                         <div className="flex-1 relative">
                            <span className="block text-[10px] lg:text-xs text-gray-500 mb-0.5">Keywords</span>
                            {keywordCount}
@@ -102,14 +109,19 @@ const DomainItem = ({
                         <div className="bg-indigo-50 p-0.5 px-1.5 text-[10px] rounded-full absolute ml-2 mt-[-6px] z-[1]">
                            <Icon type="google" size={11} /> Search Console (7d)
                         </div>
-                        <div className="dom_sc_stats flex flex-1 h-full font-semibold text-lg p-2.5 pt-3.5 rounded border border-[#E9EBFF] text-center items-center">
+                        <div
+                           className="dom_sc_stats flex flex-1 h-full font-semibold text-lg p-2.5 pt-3.5
+                              rounded border border-[#E9EBFF] text-center items-center"
+                        >
                            <div className="flex-1 relative">
                               <span className="block text-[10px] lg:text-xs text-gray-500 mb-0.5">Visits</span>
-                              {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(scVisits).replace('T', 'K')}
+                              {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' })
+                                 .format(scVisits).replace('T', 'K')}
                            </div>
                            <div className="flex-1 relative">
                               <span className="block text-[10px] lg:text-xs text-gray-500 mb-0.5">Impr.</span>
-                              {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(scImpressions).replace('T', 'K')}
+                              {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' })
+                                 .format(scImpressions).replace('T', 'K')}
                            </div>
                            <div className="flex-1 relative">
                               <span className="block text-[10px] lg:text-xs text-gray-500 mb-0.5">Avg pos</span>
