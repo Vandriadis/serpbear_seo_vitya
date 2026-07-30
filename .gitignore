@@ -44,4 +44,6 @@ TODO
 data/
 
 #copilot
-.github/*.md
+.github/*.md.env
+*.pem
+nginx/ssl/
