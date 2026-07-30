@@ -3,12 +3,14 @@ import DomainItem from '../../components/domains/DomainItem';
 import { dummyDomain } from '../../__mocks__/data';
 
 const updateThumbMock = jest.fn();
+const onAttachTagsMock = jest.fn();
 const domainItemProps = {
    domain: dummyDomain,
    selected: false,
    isConsoleIntegrated: false,
    thumb: '',
    updateThumb: updateThumbMock,
+   onAttachTags: onAttachTagsMock,
 };
 
 describe('DomainItem Component', () => {

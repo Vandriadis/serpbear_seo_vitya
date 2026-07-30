@@ -109,6 +109,7 @@ export const getAppSettings = async () : Promise<SettingsType> => {
       scrape_strategy: 'basic',
       scrape_pagination_limit: 5,
       scrape_smart_full_fallback: false,
+      domain_tags: [],
    };
 
    const settings: SettingsType = await safeReadJSON(`${process.cwd()}/data/settings.json`, defaultSettings);

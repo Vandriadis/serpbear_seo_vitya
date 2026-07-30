@@ -3,6 +3,7 @@ import Cryptr from 'cryptr';
 import db from '../../database/database';
 import Domain from '../../database/models/domain';
 import verifyUser from '../../utils/verifyUser';
+import parseDomainTags from '../../utils/parseDomainTags';
 
 type DomainGetResponse = {
    domain?: DomainType | null
@@ -26,9 +27,18 @@ const getDomain = async (req: NextApiRequest, res: NextApiResponse<DomainGetResp
    try {
       const query = { domain: req.query.domain as string };
       const foundDomain:Domain| null = await Domain.findOne({ where: query });
-      const parsedDomain = foundDomain?.get({ plain: true }) || false;
+      const parsedDomainRaw = foundDomain?.get({ plain: true }) || false;
 
-      if (parsedDomain && parsedDomain.search_console) {
+      if (!parsedDomainRaw) {
+         return res.status(200).json({ domain: null });
+      }
+
+      const parsedDomain: DomainType = {
+         ...parsedDomainRaw,
+         tags: parseDomainTags(parsedDomainRaw.tags),
+      };
+
+      if (parsedDomain.search_console) {
          try {
             const cryptr = new Cryptr(process.env.SECRET as string);
             const scData = JSON.parse(parsedDomain.search_console);

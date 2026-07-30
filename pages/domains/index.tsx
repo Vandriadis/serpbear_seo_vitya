@@ -6,6 +6,8 @@ import { CSSTransition } from 'react-transition-group';
 import toast, { Toaster } from 'react-hot-toast';
 import TopBar from '../../components/common/TopBar';
 import AddDomain from '../../components/domains/AddDomain';
+import CreateDomainTags from '../../components/domains/CreateDomainTags';
+import AttachDomainTags from '../../components/domains/AttachDomainTags';
 import Settings from '../../components/settings/Settings';
 import { useCheckMigrationStatus, useFetchSettings } from '../../services/settings';
 import { fetchDomainScreenshot, useFetchDomains } from '../../services/domains';
@@ -19,6 +21,9 @@ const Domains: NextPage = () => {
    const router = useRouter();
    const [showSettings, setShowSettings] = useState(false);
    const [showAddDomain, setShowAddDomain] = useState(false);
+   const [showCreateTags, setShowCreateTags] = useState(false);
+   const [attachTagsDomain, setAttachTagsDomain] = useState<DomainType | null>(null);
+   const [selectedFilterTags, setSelectedFilterTags] = useState<string[]>([]);
    const [domainThumbs, setDomainThumbs] = useState<thumbImages>({});
    const { data: appSettingsData, isLoading: isAppSettingsLoading } = useFetchSettings();
    const { data: domainsData, isLoading } = useFetchDomains(router, true);
@@ -26,6 +31,7 @@ const Domains: NextPage = () => {
 
    const appSettings:SettingsType = appSettingsData?.settings || {};
    const { scraper_type = '' } = appSettings;
+   const availableTags: string[] = appSettings.domain_tags || [];
 
    const totalKeywords = useMemo(() => {
       let keywords = 0;
@@ -47,6 +53,15 @@ const Domains: NextPage = () => {
       }
       return domainsSCAPI;
    }, [domainsData]);
+
+   const filteredDomains = useMemo(() => {
+      const domains = domainsData?.domains || [];
+      if (selectedFilterTags.length === 0) return domains;
+      return domains.filter((domain) => {
+         const tags = domain.tags || [];
+         return selectedFilterTags.some((tag) => tags.includes(tag));
+      });
+   }, [domainsData, selectedFilterTags]);
 
    useEffect(() => {
       if (domainsData?.domains && domainsData.domains.length > 0 && appSettings.screenshot_key) {
@@ -73,6 +88,12 @@ const Domains: NextPage = () => {
       }
    };
 
+   const toggleFilterTag = (tag: string) => {
+      setSelectedFilterTags((prev) => (
+         prev.includes(tag) ? prev.filter((t) => t !== tag) : [...prev, tag]
+      ));
+   };
+
    return (
       <div data-testid="domains" className="Domain flex flex-col min-h-screen">
          {((!scraper_type || (scraper_type === 'none')) && !isAppSettingsLoading) && (
@@ -92,11 +113,22 @@ const Domains: NextPage = () => {
          <TopBar showSettings={() => setShowSettings(true)} showAddModal={() => setShowAddDomain(true)} />
 
          <div className="flex flex-col w-full max-w-5xl mx-auto p-6 lg:mt-24 lg:p-0">
-            <div className='flex justify-between mb-2 items-center'>
+            <div className='flex justify-between mb-2 items-center gap-2 flex-wrap'>
                <div className=' text-sm text-gray-600'>
-                  {domainsData?.domains?.length || 0} Domains <span className=' text-gray-300 ml-1 mr-1'>|</span> {totalKeywords} keywords
+                  {filteredDomains.length}
+                  {selectedFilterTags.length > 0 && domainsData?.domains ? ` / ${domainsData.domains.length}` : ''} Domains
+                  <span className=' text-gray-300 ml-1 mr-1'>|</span> {totalKeywords} keywords
                </div>
-               <div>
+               <div className="flex items-center gap-1">
+                  <button
+                     className="ml-2 inline-flex items-center py-2 text-slate-600 font-bold text-sm hover:text-indigo-600"
+                     onClick={() => setShowCreateTags(true)}
+                  >
+                     <span className="text-center leading-4 mr-2 inline-flex items-center justify-center rounded-full w-7 h-7 bg-indigo-50 text-indigo-600">
+                        <Icon type="tags" size={14} />
+                     </span>
+                     <i className="not-italic hidden lg:inline-block">Create Tags</i>
+                  </button>
                   <button
                   data-testid="addDomainButton"
                   className={'ml-2 inline-block py-2 text-blue-700 font-bold text-sm'}
@@ -107,8 +139,40 @@ const Domains: NextPage = () => {
                   </button>
                </div>
             </div>
+
+            {availableTags.length > 0 && (
+               <div className="flex flex-wrap items-center gap-2 mb-4">
+                  <span className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Filter</span>
+                  {availableTags.map((tag) => {
+                     const active = selectedFilterTags.includes(tag);
+                     return (
+                        <button
+                           key={tag}
+                           type="button"
+                           onClick={() => toggleFilterTag(tag)}
+                           className={`inline-flex items-center gap-1 text-xs font-semibold px-2.5 py-1 rounded-full border transition
+                              ${active
+                              ? 'bg-indigo-600 border-indigo-600 text-white'
+                              : 'bg-white border-gray-200 text-slate-500 hover:border-indigo-200'}`}
+                        >
+                           {tag}
+                        </button>
+                     );
+                  })}
+                  {selectedFilterTags.length > 0 && (
+                     <button
+                        type="button"
+                        className="text-xs text-slate-400 hover:text-indigo-600 underline"
+                        onClick={() => setSelectedFilterTags([])}
+                     >
+                        Clear
+                     </button>
+                  )}
+               </div>
+            )}
+
             <div className='flex w-full flex-col mb-8'>
-               {domainsData?.domains && domainsData.domains.map((domain:DomainType) => {
+               {filteredDomains.map((domain:DomainType) => {
                   return <DomainItem
                            key={domain.ID}
                            domain={domain}
@@ -116,7 +180,7 @@ const Domains: NextPage = () => {
                            isConsoleIntegrated={!!(appSettings && appSettings.search_console_integrated) || !!domainSCAPiObj[domain.ID] }
                            thumb={domainThumbs[domain.domain]}
                            updateThumb={manuallyUpdateThumb}
-                           // isConsoleIntegrated={false}
+                           onAttachTags={(d: DomainType) => setAttachTagsDomain(d)}
                            />;
                })}
                {isLoading && (
@@ -129,12 +193,31 @@ const Domains: NextPage = () => {
                      No Domains Found. Add a Domain to get started!
                   </div>
                )}
+               {!isLoading && domainsData && domainsData.domains.length > 0 && filteredDomains.length === 0 && (
+                  <div className='noDomains mt-4 p-5 py-8 rounded border text-center bg-white text-sm text-gray-500'>
+                     No domains match the selected tags.
+                  </div>
+               )}
             </div>
          </div>
 
          <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
+            <AddDomain
+               closeModal={() => setShowAddDomain(false)}
+               domains={domainsData?.domains || []}
+               availableTags={availableTags}
+            />
          </CSSTransition>
+         <CSSTransition in={showCreateTags} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+            <CreateDomainTags closeModal={() => setShowCreateTags(false)} />
+         </CSSTransition>
+         {attachTagsDomain && (
+            <AttachDomainTags
+               domain={attachTagsDomain}
+               availableTags={availableTags}
+               closeModal={() => setAttachTagsDomain(null)}
+            />
+         )}
          <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
              <Settings closeSettings={() => setShowSettings(false)} />
          </CSSTransition>

@@ -5,7 +5,7 @@ type DomainType = {
    ID: number,
    domain: string,
    slug: string,
-   tags?: string,
+   tags: string[],
    notification: boolean,
    notification_interval: string,
    notification_emails: string,
@@ -120,7 +120,8 @@ type SettingsType = {
    adwords_refresh_token?: string,
    adwords_developer_token?: string,
    adwords_account_id?: string,
-   keywordsColumns: string[]
+   keywordsColumns: string[],
+   domain_tags?: string[],
 }
 
 type KeywordSCDataChild = {

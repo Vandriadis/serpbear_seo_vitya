@@ -7,6 +7,16 @@ type UpdatePayload = {
    domain: DomainType
 }
 
+type AddDomainPayload = {
+   domains: string[],
+   tags?: string[],
+}
+
+type UpdateDomainTagsPayload = {
+   domain: DomainType,
+   tags: string[],
+}
+
 export async function fetchDomains(router: NextRouter, withStats:boolean): Promise<{domains: DomainType[]}> {
    const res = await fetch(`${window.location.origin}/api/domains${withStats ? '?withstats=true' : ''}`, { method: 'GET' });
    if (res.status >= 400 && res.status < 600) {
@@ -77,9 +87,9 @@ export function useFetchDomain(router: NextRouter, domainName:string, onSuccess:
 export function useAddDomain(onSuccess:Function) {
    const router = useRouter();
    const queryClient = useQueryClient();
-   return useMutation(async (domains:string[]) => {
+   return useMutation(async ({ domains, tags = [] }: AddDomainPayload) => {
       const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
-      const fetchOpts = { method: 'POST', headers, body: JSON.stringify({ domains }) };
+      const fetchOpts = { method: 'POST', headers, body: JSON.stringify({ domains, tags }) };
       const res = await fetch(`${window.location.origin}/api/domains`, fetchOpts);
       if (res.status >= 400 && res.status < 600) {
          throw new Error('Bad response from server');
@@ -125,6 +135,29 @@ export function useUpdateDomain(onSuccess:Function) {
       onError: (error) => {
          console.log('Error Updating Domain Settings!!!', error);
          toast('Error Updating Domain Settings', { icon: '⚠️' });
+      },
+   });
+}
+
+export function useUpdateDomainTags(onSuccess?: Function) {
+   const queryClient = useQueryClient();
+   return useMutation(async ({ domain, tags }: UpdateDomainTagsPayload) => {
+      const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+      const fetchOpts = { method: 'PUT', headers, body: JSON.stringify({ tags }) };
+      const res = await fetch(`${window.location.origin}/api/domains?domain=${domain.domain}`, fetchOpts);
+      const responseObj = await res.json();
+      if (res.status >= 400 && res.status < 600) {
+         throw new Error(responseObj?.error || 'Bad response from server');
+      }
+      return responseObj;
+   }, {
+      onSuccess: async () => {
+         toast('Domain Tags Updated!', { icon: '✔️' });
+         if (onSuccess) onSuccess();
+         queryClient.invalidateQueries(['domains']);
+      },
+      onError: () => {
+         toast('Error Updating Domain Tags.', { icon: '⚠️' });
       },
    });
 }

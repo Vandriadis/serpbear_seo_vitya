@@ -7,6 +7,7 @@ import getdomainStats from '../../utils/domains';
 import verifyUser from '../../utils/verifyUser';
 import { checkSerchConsoleIntegration, removeLocalSCData } from '../../utils/searchConsole';
 import { removeFromRetryQueue } from '../../utils/scraper';
+import parseDomainTags from '../../utils/parseDomainTags';
 
 type DomainsGetRes = {
    domains: DomainType[]
@@ -26,9 +27,17 @@ type DomainsDeleteRes = {
 }
 
 type DomainsUpdateRes = {
-   domain: Domain|null,
+   domain: DomainType|null,
    error?: string|null,
 }
+
+const formatDomain = (el: Domain): DomainType => {
+   const domainItem = el.get({ plain: true }) as DomainType & { tags?: string | string[] };
+   return {
+      ...domainItem,
+      tags: parseDomainTags(domainItem.tags),
+   };
+};
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
    await db.sync();
@@ -56,7 +65,7 @@ export const getDomains = async (req: NextApiRequest, res: NextApiResponse<Domai
    try {
       const allDomains: Domain[] = await Domain.findAll();
       const formattedDomains: DomainType[] = allDomains.map((el) => {
-         const domainItem:DomainType = el.get({ plain: true });
+         const domainItem = formatDomain(el);
          const scData = domainItem?.search_console ? JSON.parse(domainItem.search_console) : {};
          const { client_email, private_key } = scData;
          const searchConsoleData = scData ? { ...scData, client_email: client_email ? 'true' : '', private_key: private_key ? 'true' : '' } : {};
@@ -70,7 +79,8 @@ export const getDomains = async (req: NextApiRequest, res: NextApiResponse<Domai
 };
 
 const addDomain = async (req: NextApiRequest, res: NextApiResponse<DomainsAddResponse>) => {
-   const { domains } = req.body;
+   const { domains, tags } = req.body;
+   const tagsToAttach = parseDomainTags(tags);
    if (domains && Array.isArray(domains) && domains.length > 0) {
       const domainsToAdd: any = [];
 
@@ -80,11 +90,12 @@ const addDomain = async (req: NextApiRequest, res: NextApiResponse<DomainsAddRes
             slug: domain.trim().replaceAll('-', '_').replaceAll('.', '-').replaceAll('/', '-'),
             lastUpdated: new Date().toJSON(),
             added: new Date().toJSON(),
+            tags: JSON.stringify(tagsToAttach),
          });
       });
       try {
          const newDomains:Domain[] = await Domain.bulkCreate(domainsToAdd);
-         const formattedDomains = newDomains.map((el) => el.get({ plain: true }));
+         const formattedDomains = newDomains.map((el) => formatDomain(el));
          return res.status(201).json({ domains: formattedDomains });
       } catch (error) {
          console.log('[ERROR] Adding New Domain ', error);
@@ -121,13 +132,24 @@ export const updateDomain = async (req: NextApiRequest, res: NextApiResponse<Dom
    const {
       notification_interval, notification_emails, search_console,
       scrape_strategy, scrape_pagination_limit, scrape_smart_full_fallback,
-      subdomain_matching,
-   } = req.body as DomainSettings;
+      subdomain_matching, tags,
+   } = req.body;
 
    try {
       const domainToUpdate: Domain|null = await Domain.findOne({ where: { domain } });
+      if (!domainToUpdate) {
+         return res.status(400).json({ domain: null, error: 'Domain not found.' });
+      }
+
+      // Tags-only update (from domain card attach UI)
+      if (Array.isArray(tags) && notification_interval === undefined && search_console === undefined) {
+         domainToUpdate.set({ tags: JSON.stringify(parseDomainTags(tags)) });
+         await domainToUpdate.save();
+         return res.status(200).json({ domain: formatDomain(domainToUpdate) });
+      }
+
       // Validate Search Console API Data
-      if (domainToUpdate && search_console?.client_email && search_console?.private_key) {
+      if (search_console?.client_email && search_console?.private_key) {
          const theDomainObj = domainToUpdate.get({ plain: true });
          const isSearchConsoleAPIValid = await checkSerchConsoleIntegration({ ...theDomainObj, search_console: JSON.stringify(search_console) });
          if (!isSearchConsoleAPIValid.isValid) {
@@ -137,19 +159,22 @@ export const updateDomain = async (req: NextApiRequest, res: NextApiResponse<Dom
          search_console.client_email = search_console.client_email ? cryptr.encrypt(search_console.client_email.trim()) : '';
          search_console.private_key = search_console.private_key ? cryptr.encrypt(search_console.private_key.trim()) : '';
       }
-      if (domainToUpdate) {
-         domainToUpdate.set({
-            notification_interval,
-            notification_emails,
-            search_console: JSON.stringify(search_console),
-            scrape_strategy: scrape_strategy || '',
-            scrape_pagination_limit: scrape_pagination_limit || 0,
-            scrape_smart_full_fallback: !!scrape_smart_full_fallback,
-            subdomain_matching: subdomain_matching || '',
-         });
-         await domainToUpdate.save();
+
+      const updatePayload: Record<string, unknown> = {
+         notification_interval,
+         notification_emails,
+         search_console: JSON.stringify(search_console),
+         scrape_strategy: scrape_strategy || '',
+         scrape_pagination_limit: scrape_pagination_limit || 0,
+         scrape_smart_full_fallback: !!scrape_smart_full_fallback,
+         subdomain_matching: subdomain_matching || '',
+      };
+      if (Array.isArray(tags)) {
+         updatePayload.tags = JSON.stringify(parseDomainTags(tags));
       }
-      return res.status(200).json({ domain: domainToUpdate });
+      domainToUpdate.set(updatePayload);
+      await domainToUpdate.save();
+      return res.status(200).json({ domain: formatDomain(domainToUpdate) });
    } catch (error) {
       console.log('[ERROR] Updating Domain: ', req.query.domain, error);
       return res.status(400).json({ domain: null, error: 'Error Updating Domain. An Unknown Error Occurred.' });

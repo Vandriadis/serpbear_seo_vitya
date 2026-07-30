@@ -276,10 +276,12 @@ html.dark .domItem:hover {
 .dom_stats > div::after {
    content: "";
    width: 1px;
-   height: 35px;
+   height: 28px;
    background: var(--sb-border);
    position: absolute;
    right: 0;
+   top: 50%;
+   transform: translateY(-50%);
 }
 
 .dom_sc_stats > div:nth-child(3)::after {
