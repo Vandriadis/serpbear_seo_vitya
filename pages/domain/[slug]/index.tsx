@@ -14,6 +14,7 @@ import Settings from '../../../components/settings/Settings';
 import { useFetchDomains } from '../../../services/domains';
 import { useFetchKeywords } from '../../../services/keywords';
 import { useFetchSettings } from '../../../services/settings';
+import { canWriteRole, useCurrentUser } from '../../../services/auth';
 import AddKeywords from '../../../components/keywords/AddKeywords';
 import Footer from '../../../components/common/Footer';
 
@@ -26,6 +27,8 @@ const SingleDomain: NextPage = () => {
    const [keywordSPollInterval, setKeywordSPollInterval] = useState<undefined|number>(undefined);
    const { data: appSettingsData, isLoading: isAppSettingsLoading } = useFetchSettings();
    const { data: domainsData } = useFetchDomains(router);
+   const { data: currentUserData } = useCurrentUser();
+   const readOnly = !canWriteRole(currentUserData?.user?.role);
    const appSettings: SettingsType = appSettingsData?.settings || {};
    const { scraper_type = '', available_scrapers = [] } = appSettings;
    const activeScraper = useMemo(() => available_scrapers.find((scraper) => scraper.value === scraper_type), [scraper_type, available_scrapers]);
@@ -49,7 +52,7 @@ const SingleDomain: NextPage = () => {
 
    return (
       <div className="Domain ">
-         {((!scraper_type || (scraper_type === 'none')) && !isAppSettingsLoading) && (
+         {((!scraper_type || (scraper_type === 'none')) && !isAppSettingsLoading && !readOnly) && (
                <div className=' p-3 bg-red-600 text-white text-sm text-center'>
                   A Scrapper/Proxy has not been set up Yet. Open Settings to set it up and start using the app.
                </div>
@@ -61,7 +64,7 @@ const SingleDomain: NextPage = () => {
          }
          <TopBar showSettings={() => setShowSettings(true)} showAddModal={() => setShowAddDomain(true)} />
          <div className="flex w-full max-w-7xl mx-auto">
-            <Sidebar domains={theDomains} showAddModal={() => setShowAddDomain(true)} />
+            <Sidebar domains={theDomains} showAddModal={() => setShowAddDomain(true)} readOnly={readOnly} />
             <div className="domain_keywords px-5 pt-10 lg:px-0 lg:pt-8 w-full">
                {activDomain && activDomain.domain
                ? <DomainHeader
@@ -70,6 +73,7 @@ const SingleDomain: NextPage = () => {
                   showAddModal={setShowAddKeywords}
                   showSettingsModal={setShowDomainSettings}
                   exportCsv={() => exportCSV(theKeywords, activDomain.domain)}
+                  readOnly={readOnly}
                   />
                   : <div className='w-full lg:h-[100px]'></div>
                }
@@ -81,32 +85,41 @@ const SingleDomain: NextPage = () => {
                setShowAddModal={setShowAddKeywords}
                isConsoleIntegrated={!!(appSettings && appSettings.search_console_integrated) || domainHasScAPI }
                settings={appSettings}
+               readOnly={readOnly}
                />
             </div>
          </div>
 
-         <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
-         </CSSTransition>
+         {!readOnly && (
+            <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
+            </CSSTransition>
+         )}
 
-         <CSSTransition in={showDomainSettings} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <DomainSettings
-            domain={showDomainSettings && theDomains && activDomain && activDomain.domain ? activDomain : false}
-            closeModal={setShowDomainSettings}
-            />
-         </CSSTransition>
-         <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
-             <Settings closeSettings={() => setShowSettings(false)} />
-         </CSSTransition>
-         <CSSTransition in={showAddKeywords} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <AddKeywords
-               domain={activDomain?.domain || ''}
-               scraperName={activeScraper?.label || ''}
-               keywords={theKeywords}
-               allowsCity={!!activeScraper?.allowsCity}
-               closeModal={() => setShowAddKeywords(false)}
+         {!readOnly && (
+            <CSSTransition in={showDomainSettings} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <DomainSettings
+               domain={showDomainSettings && theDomains && activDomain && activDomain.domain ? activDomain : false}
+               closeModal={setShowDomainSettings}
                />
-         </CSSTransition>
+            </CSSTransition>
+         )}
+         {!readOnly && (
+            <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
+                <Settings closeSettings={() => setShowSettings(false)} />
+            </CSSTransition>
+         )}
+         {!readOnly && (
+            <CSSTransition in={showAddKeywords} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <AddKeywords
+                  domain={activDomain?.domain || ''}
+                  scraperName={activeScraper?.label || ''}
+                  keywords={theKeywords}
+                  allowsCity={!!activeScraper?.allowsCity}
+                  closeModal={() => setShowAddKeywords(false)}
+                  />
+            </CSSTransition>
+         )}
          <Footer currentVersion={appSettings?.version ? appSettings.version : ''} />
       </div>
    );

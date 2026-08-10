@@ -1,6 +1,6 @@
 import { writeFile } from 'fs/promises';
 import type { NextApiRequest, NextApiResponse } from 'next';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 
 type SettingsGetResponse = {
    cleared?: boolean,
@@ -8,11 +8,12 @@ type SettingsGetResponse = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'PUT') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return clearFailedQueue(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });

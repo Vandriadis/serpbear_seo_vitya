@@ -23,11 +23,12 @@ type KeywordsTableProps = {
    setShowAddModal: Function,
    isConsoleIntegrated: boolean,
    settings?: SettingsType
+   readOnly?: boolean
 }
 
 const KeywordsTable = (props: KeywordsTableProps) => {
    const titleColumnRef = useRef(null);
-   const { keywords = [], isLoading = true, isConsoleIntegrated = false, settings } = props;
+   const { keywords = [], isLoading = true, isConsoleIntegrated = false, settings, readOnly = false } = props;
    const showSCData = isConsoleIntegrated;
    const [device, setDevice] = useState<string>('desktop');
    const [selectedKeywords, setSelectedKeywords] = useState<number[]>([]);
@@ -121,6 +122,7 @@ const KeywordsTable = (props: KeywordsTableProps) => {
          scDataType={scDataType}
          tableColumns={tableColumns}
          maxTitleColumnWidth={maxTitleColumnWidth}
+         readOnly={readOnly}
          />
       );
    };
@@ -130,7 +132,7 @@ const KeywordsTable = (props: KeywordsTableProps) => {
    return (
       <div>
          <div className='domKeywords flex flex-col bg-[white] rounded-md text-sm border mb-5'>
-            {selectedKeywords.length > 0 && (
+            {selectedKeywords.length > 0 && !readOnly && (
                <div className='font-semibold text-sm py-4 px-8 text-gray-500 '>
                   <ul className=''>
                      <li className='inline-block mr-4'>

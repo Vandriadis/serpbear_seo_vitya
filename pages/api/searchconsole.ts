@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import db from '../../database/database';
 import Domain from '../../database/models/domain';
 import { fetchDomainSCData, getSearchConsoleApiInfo, readLocalSCData } from '../../utils/searchConsole';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 
 type searchConsoleRes = {
    data: SCDomainDataType|null
@@ -16,14 +16,15 @@ type searchConsoleCRONRes = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
    await db.sync();
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'GET') {
       return getDomainSearchConsoleData(req, res);
    }
    if (req.method === 'POST') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return cronRefreshSearchConsoleData(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });

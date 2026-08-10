@@ -17,6 +17,7 @@ import { useFetchSCInsight } from '../../../../services/searchConsole';
 import SCInsight from '../../../../components/insight/Insight';
 import { useFetchSettings } from '../../../../services/settings';
 import Footer from '../../../../components/common/Footer';
+import { canWriteRole, useCurrentUser } from '../../../../services/auth';
 
 const InsightPage: NextPage = () => {
    const router = useRouter();
@@ -26,6 +27,8 @@ const InsightPage: NextPage = () => {
    const [scDateFilter, setSCDateFilter] = useState('thirtyDays');
    const { data: appSettings } = useFetchSettings();
    const { data: domainsData } = useFetchDomains(router);
+   const { data: currentUserData } = useCurrentUser();
+   const readOnly = !canWriteRole(currentUserData?.user?.role);
    const scConnected = !!(appSettings && appSettings?.settings?.search_console_integrated);
    const { data: insightData } = useFetchSCInsight(router, !!(domainsData?.domains?.length) && scConnected);
 
@@ -54,7 +57,7 @@ const InsightPage: NextPage = () => {
          }
          <TopBar showSettings={() => setShowSettings(true)} showAddModal={() => setShowAddDomain(true)} />
          <div className="flex w-full max-w-7xl mx-auto">
-            <Sidebar domains={theDomains} showAddModal={() => setShowAddDomain(true)} />
+            <Sidebar domains={theDomains} showAddModal={() => setShowAddDomain(true)} readOnly={readOnly} />
             <div className="domain_keywords px-5 pt-10 lg:px-0 lg:pt-8 w-full">
                {activDomain && activDomain.domain
                ? <DomainHeader
@@ -65,6 +68,7 @@ const InsightPage: NextPage = () => {
                   exportCsv={() => exportCSV([], activDomain.domain, scDateFilter)}
                   scFilter={scDateFilter}
                   setScFilter={(item:string) => setSCDateFilter(item)}
+                  readOnly={readOnly}
                   />
                   : <div className='w-full lg:h-[100px]'></div>
                }
@@ -77,19 +81,25 @@ const InsightPage: NextPage = () => {
             </div>
          </div>
 
-         <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
-         </CSSTransition>
+         {!readOnly && (
+            <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
+            </CSSTransition>
+         )}
 
-         <CSSTransition in={showDomainSettings} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <DomainSettings
-            domain={showDomainSettings && theDomains && activDomain && activDomain.domain ? activDomain : false}
-            closeModal={setShowDomainSettings}
-            />
-         </CSSTransition>
-         <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
-             <Settings closeSettings={() => setShowSettings(false)} />
-         </CSSTransition>
+         {!readOnly && (
+            <CSSTransition in={showDomainSettings} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <DomainSettings
+               domain={showDomainSettings && theDomains && activDomain && activDomain.domain ? activDomain : false}
+               closeModal={setShowDomainSettings}
+               />
+            </CSSTransition>
+         )}
+         {!readOnly && (
+            <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
+                <Settings closeSettings={() => setShowSettings(false)} />
+            </CSSTransition>
+         )}
          <Footer currentVersion={appSettings?.settings?.version ? appSettings.settings.version : ''} />
       </div>
    );

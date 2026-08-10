@@ -14,10 +14,14 @@ type DomainHeaderProps = {
    scFilter?: string
    setScFilter?: Function
    showIdeaUpdateModal?:Function
+   readOnly?: boolean
 }
 
 const DomainHeader = (
-   { domain, showAddModal, showSettingsModal, exportCsv, domains, scFilter = 'thirtyDays', setScFilter, showIdeaUpdateModal }: DomainHeaderProps,
+   {
+      domain, showAddModal, showSettingsModal, exportCsv, domains, scFilter = 'thirtyDays',
+      setScFilter, showIdeaUpdateModal, readOnly = false,
+   }: DomainHeaderProps,
 ) => {
    const router = useRouter();
    const [showOptions, setShowOptions] = useState<boolean>(false);
@@ -74,20 +78,22 @@ const DomainHeader = (
                   </a>
                </Link>
             </li>
-            <li className={`${tabStyle} ${router.pathname === '/domain/ideas/[slug]' ? 'bg-white border border-b-0 font-semibold' : ''}`}>
-               <Link href={`/domain/ideas/${domain.slug}`} passHref={true}>
-                  <a className='px-4 py-2 inline-block'><Icon type="adwords" size={13} classes='hidden lg:inline-block' />
-                     <span className='text-xs lg:text-sm lg:ml-2'>Ideas</span>
-                     <Icon
-                     type='help'
-                     size={14}
-                     color="#aaa"
-                     classes="ml-2 hidden lg:inline-block"
-                     title='Get Keyword Ideas for this domain from Google Ads'
-                     />
-                  </a>
-               </Link>
-            </li>
+            {!readOnly && (
+               <li className={`${tabStyle} ${router.pathname === '/domain/ideas/[slug]' ? 'bg-white border border-b-0 font-semibold' : ''}`}>
+                  <Link href={`/domain/ideas/${domain.slug}`} passHref={true}>
+                     <a className='px-4 py-2 inline-block'><Icon type="adwords" size={13} classes='hidden lg:inline-block' />
+                        <span className='text-xs lg:text-sm lg:ml-2'>Ideas</span>
+                        <Icon
+                        type='help'
+                        size={14}
+                        color="#aaa"
+                        classes="ml-2 hidden lg:inline-block"
+                        title='Get Keyword Ideas for this domain from Google Ads'
+                        />
+                     </a>
+                  </Link>
+               </li>
+            )}
          </ul>
          <div className={'flex mb-0 lg:mb-1 lg:mt-3'}>
             {!isInsight && <button className={`${buttonStyle} lg:hidden`} onClick={() => setShowOptions(!showOptions)}>
@@ -107,7 +113,7 @@ const DomainHeader = (
                      <Icon type='download' size={20} /><i className={`${buttonLabelStyle}`}>Export as csv</i>
                   </button>
                )}
-               {!isConsole && !isInsight && !isIdeas && (
+               {!isConsole && !isInsight && !isIdeas && !readOnly && (
                   <button
                   className={`domheader_action_button relative ${buttonStyle} lg:ml-3`}
                   aria-pressed="false"
@@ -115,15 +121,17 @@ const DomainHeader = (
                      <Icon type='reload' size={14} /><i className={`${buttonLabelStyle}`}>Reload All Serps</i>
                   </button>
                 )}
-               <button
-               data-testid="show_domain_settings"
-               className={`domheader_action_button relative ${buttonStyle} lg:ml-3`}
-               aria-pressed="false"
-               onClick={() => showSettingsModal(true)}><Icon type='settings' size={20} />
-                  <i className={`${buttonLabelStyle}`}>Domain Settings</i>
-               </button>
+               {!readOnly && (
+                  <button
+                  data-testid="show_domain_settings"
+                  className={`domheader_action_button relative ${buttonStyle} lg:ml-3`}
+                  aria-pressed="false"
+                  onClick={() => showSettingsModal(true)}><Icon type='settings' size={20} />
+                     <i className={`${buttonLabelStyle}`}>Domain Settings</i>
+                  </button>
+               )}
             </div>
-            {!isConsole && !isInsight && !isIdeas && (
+            {!isConsole && !isInsight && !isIdeas && !readOnly && (
                <button
                data-testid="add_keyword"
                className={'ml-2 inline-block text-blue-700 font-bold text-sm lg:px-4 lg:py-2'}
@@ -153,7 +161,7 @@ const DomainHeader = (
                   )}
                </div>
             )}
-            {isIdeas && (
+            {isIdeas && !readOnly && (
                <button
                data-testid="load_ideas"
                className={'ml-2 text-blue-700 font-bold text-sm flex items-center lg:px-4 lg:py-2'}

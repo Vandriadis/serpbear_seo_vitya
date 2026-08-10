@@ -4,7 +4,7 @@ import { readFile, writeFile } from 'fs/promises';
 import Cryptr from 'cryptr';
 import getConfig from 'next/config';
 import db from '../../database/database';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 import { getAdwordsCredentials, getAdwordsKeywordIdeas } from '../../utils/adwords';
 
 type adwordsValidateResp = {
@@ -20,10 +20,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
    if (req.method === 'GET' && req.query.code) {
       return getAdwordsRefreshToken(req, res);
    }
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
+   if (denyUnlessWrite(auth, res)) { return undefined; }
    if (req.method === 'GET') {
       return getAdwordsRefreshToken(req, res);
    }

@@ -5,7 +5,7 @@ import Keyword from '../../database/models/keyword';
 import Domain from '../../database/models/domain';
 import refreshAndUpdateKeywords from '../../utils/refresh';
 import { getAppSettings } from './settings';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 import parseKeywords from '../../utils/parseKeywords';
 import { scrapeKeywordFromGoogle } from '../../utils/scraper';
 
@@ -26,14 +26,15 @@ type KeywordSearchResultRes = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
    await db.sync();
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'GET') {
       return getKeywordSearchResults(req, res);
    }
    if (req.method === 'POST') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return refresTheKeywords(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });
