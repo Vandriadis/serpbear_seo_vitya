@@ -1,11 +1,13 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import toast from 'react-hot-toast';
+import { CSSTransition } from 'react-transition-group';
 import Icon from './Icon';
 import ThemeToggle from './ThemeToggle';
 import { useTheme } from '../../hooks/useTheme';
 import { canWriteRole, useCurrentUser } from '../../services/auth';
+import Help from '../settings/Help';
 
 type TopbarProps = {
    showSettings: Function,
@@ -14,6 +16,8 @@ type TopbarProps = {
 
 const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
    const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
+   const [showHelp, setShowHelp] = useState(false);
+   const [helpSection, setHelpSection] = useState('overview');
    const router = useRouter();
    const { theme } = useTheme();
    const isDomainsPage = router.pathname === '/domains';
@@ -24,6 +28,23 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
    const role = currentUserData?.user?.role;
    const canWrite = canWriteRole(role);
    const isViewer = role === 'viewer';
+
+   useEffect(() => {
+      const openHelp = (event: Event) => {
+         const detail = (event as CustomEvent<string>).detail;
+         setHelpSection(typeof detail === 'string' && detail ? detail : 'overview');
+         setShowHelp(true);
+         setShowMobileMenu(false);
+      };
+      window.addEventListener('serpbear:open-help', openHelp as EventListener);
+      return () => window.removeEventListener('serpbear:open-help', openHelp as EventListener);
+   }, []);
+
+   const openHelpSection = (section = 'overview') => {
+      setHelpSection(section);
+      setShowHelp(true);
+      setShowMobileMenu(false);
+   };
 
    const logoutUser = async () => {
       try {
@@ -105,7 +126,7 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
                   </li>
                )}
                <li className='block lg:inline-block lg:ml-5'>
-                  <a className='block px-3 py-2 cursor-pointer' href='https://docs.serpbear.com/' target="_blank" rel='noreferrer'>
+                  <a className='block px-3 py-2 cursor-pointer' onClick={() => openHelpSection('overview')}>
                      <Icon type="question" color={mutedIcon} size={14} /> Help
                   </a>
                </li>
@@ -116,6 +137,9 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
                </li>
             </ul>
          </div>
+         <CSSTransition in={showHelp} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
+            <Help closeHelp={() => setShowHelp(false)} initialSection={helpSection} />
+         </CSSTransition>
        </div>
    );
  };
