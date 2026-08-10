@@ -4,7 +4,7 @@ import db from '../../database/database';
 import Domain from '../../database/models/domain';
 import Keyword from '../../database/models/keyword';
 import getdomainStats from '../../utils/domains';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 import { checkSerchConsoleIntegration, removeLocalSCData } from '../../utils/searchConsole';
 import { removeFromRetryQueue } from '../../utils/scraper';
 
@@ -32,20 +32,23 @@ type DomainsUpdateRes = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
    await db.sync();
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'GET') {
       return getDomains(req, res);
    }
    if (req.method === 'POST') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return addDomain(req, res);
    }
    if (req.method === 'DELETE') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return deleteDomain(req, res);
    }
    if (req.method === 'PUT') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return updateDomain(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });

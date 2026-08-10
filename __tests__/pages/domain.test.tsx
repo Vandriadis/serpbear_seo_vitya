@@ -10,6 +10,11 @@ import { useFetchSettings } from '../../services/settings';
 jest.mock('../../services/domains');
 jest.mock('../../services/keywords');
 jest.mock('../../services/settings');
+jest.mock('../../services/auth', () => ({
+   useCurrentUser: () => ({ data: { user: { ID: 1, username: 'admin', role: 'admin' } }, isLoading: false }),
+   canWriteRole: (role?: string) => role === 'admin' || role === 'seo',
+   isAdminRole: (role?: string) => role === 'admin',
+}));
 
 jest.mock('next/router', () => ({
    useRouter: () => ({

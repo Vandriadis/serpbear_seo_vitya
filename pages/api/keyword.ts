@@ -10,12 +10,15 @@ type KeywordGetResponse = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-   const authorized = verifyUser(req, res);
-   if (authorized === 'authorized' && req.method === 'GET') {
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
+   }
+   if (req.method === 'GET') {
       await db.sync();
       return getKeyword(req, res);
    }
-   return res.status(401).json({ error: authorized });
+   return res.status(401).json({ error: 'Invalid Method' });
 }
 
 const getKeyword = async (req: NextApiRequest, res: NextApiResponse<KeywordGetResponse>) => {

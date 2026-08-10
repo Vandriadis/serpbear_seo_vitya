@@ -1,11 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { useFetchSettings, useUpdateSettings } from '../../services/settings';
+import { isAdminRole, useCurrentUser } from '../../services/auth';
 import Icon from '../common/Icon';
 import NotificationSettings from './NotificationSettings';
 import ScraperSettings from './ScraperSettings';
 import useOnKey from '../../hooks/useOnKey';
 import IntegrationSettings from './IntegrationSettings';
+import UserSettings from './UserSettings';
 
 type SettingsProps = {
    closeSettings: Function,
@@ -41,6 +43,8 @@ const Settings = ({ closeSettings }:SettingsProps) => {
    const [settingsError, setSettingsError] = useState<SettingsError|null>(null);
    const { mutate: updateMutate, isLoading: isUpdating } = useUpdateSettings(() => console.log(''));
    const { data: appSettings, isLoading } = useFetchSettings();
+   const { data: currentUserData } = useCurrentUser();
+   const isAdmin = isAdminRole(currentUserData?.user?.role);
    useOnKey('Escape', closeSettings);
 
    useEffect(() => {
@@ -48,6 +52,10 @@ const Settings = ({ closeSettings }:SettingsProps) => {
          setSettings(appSettings.settings);
       }
    }, [appSettings]);
+
+   useEffect(() => {
+      if (!isAdmin && currentTab === 'users') { setCurrentTab('scraper'); }
+   }, [isAdmin, currentTab]);
 
    const closeOnBGClick = (e:React.SyntheticEvent) => {
       e.stopPropagation();
@@ -82,9 +90,7 @@ const Settings = ({ closeSettings }:SettingsProps) => {
          setSettingsError(error);
          setTimeout(() => { setSettingsError(null); }, 3000);
       } else {
-         // Perform Update
          updateMutate(settings);
-         // If Scraper is updated, refresh the page.
          if (appSettings.settings === 'none' && scraper_type !== 'none') {
             window.location.reload();
          }
@@ -124,6 +130,13 @@ const Settings = ({ closeSettings }:SettingsProps) => {
                      onClick={() => setCurrentTab('integrations')}>
                        <Icon type='integration' size={14} /> Integrations
                      </li>
+                     {isAdmin && (
+                        <li
+                        className={`${tabStyle} ${currentTab === 'users' ? tabStyleActive : 'border-transparent'}`}
+                        onClick={() => setCurrentTab('users')}>
+                          <Icon type='domains' size={14} /> Users
+                        </li>
+                     )}
                   </ul>
                </div>
                {currentTab === 'scraper' && settings && (
@@ -142,13 +155,18 @@ const Settings = ({ closeSettings }:SettingsProps) => {
                   closeSettings={closeSettings}
                    />
                )}
-               <div className=' border-t-[1px] border-gray-200 p-2 px-3'>
-                  <button
-                  onClick={() => performUpdate()}
-                  className=' py-3 px-5 w-full rounded cursor-pointer bg-blue-700 text-white font-semibold text-sm'>
-                  {isUpdating && <Icon type="loading" size={14} />} Update Settings
-                  </button>
-               </div>
+               {currentTab === 'users' && isAdmin && (
+                  <UserSettings />
+               )}
+               {currentTab !== 'users' && (
+                  <div className=' border-t-[1px] border-gray-200 p-2 px-3'>
+                     <button
+                     onClick={() => performUpdate()}
+                     className=' py-3 px-5 w-full rounded cursor-pointer bg-blue-700 text-white font-semibold text-sm'>
+                     {isUpdating && <Icon type="loading" size={14} />} Update Settings
+                     </button>
+                  </div>
+               )}
             </div>
             <Toaster position='bottom-center' containerClassName="react_toaster" />
        </div>

@@ -5,6 +5,11 @@ import { dummyDomain } from '../../__mocks__/data';
 import Domains from '../../pages/domains';
 
 jest.mock('next/router', () => jest.requireActual('next-router-mock'));
+jest.mock('../../services/auth', () => ({
+   useCurrentUser: () => ({ data: { user: { ID: 1, username: 'admin', role: 'admin' } }, isLoading: false }),
+   canWriteRole: (role?: string) => role === 'admin' || role === 'seo',
+   isAdminRole: (role?: string) => role === 'admin',
+}));
 jest.spyOn(ReactQuery, 'useQuery').mockImplementation(jest.fn().mockReturnValue(
    { data: { domains: [dummyDomain] }, isLoading: false, isSuccess: true },
 ));

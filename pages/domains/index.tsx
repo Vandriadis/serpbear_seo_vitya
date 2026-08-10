@@ -8,6 +8,7 @@ import TopBar from '../../components/common/TopBar';
 import AddDomain from '../../components/domains/AddDomain';
 import Settings from '../../components/settings/Settings';
 import { useCheckMigrationStatus, useFetchSettings } from '../../services/settings';
+import { canWriteRole, useCurrentUser } from '../../services/auth';
 import { fetchDomainScreenshot, useFetchDomains } from '../../services/domains';
 import DomainItem from '../../components/domains/DomainItem';
 import Icon from '../../components/common/Icon';
@@ -23,6 +24,8 @@ const Domains: NextPage = () => {
    const { data: appSettingsData, isLoading: isAppSettingsLoading } = useFetchSettings();
    const { data: domainsData, isLoading } = useFetchDomains(router, true);
    const { data: migrationStatus } = useCheckMigrationStatus();
+   const { data: currentUserData } = useCurrentUser();
+   const canWrite = canWriteRole(currentUserData?.user?.role);
 
    const appSettings:SettingsType = appSettingsData?.settings || {};
    const { scraper_type = '' } = appSettings;
@@ -75,12 +78,12 @@ const Domains: NextPage = () => {
 
    return (
       <div data-testid="domains" className="Domain flex flex-col min-h-screen">
-         {((!scraper_type || (scraper_type === 'none')) && !isAppSettingsLoading) && (
+         {((!scraper_type || (scraper_type === 'none')) && !isAppSettingsLoading && canWrite) && (
                <div className=' p-3 bg-red-600 text-white text-sm text-center'>
                   A Scrapper/Proxy has not been set up Yet. Open Settings to set it up and start using the app.
                </div>
          )}
-         {migrationStatus?.hasMigrations && (
+         {migrationStatus?.hasMigrations && canWrite && (
                <div className=' p-3 bg-black text-white text-sm text-center'>
                   You need to Update your database. Stop Serpbear and run this command to update your database:
                   <code className=' bg-gray-700 px-2 py-0 ml-1'>npm run db:migrate</code>
@@ -96,16 +99,18 @@ const Domains: NextPage = () => {
                <div className=' text-sm text-gray-600'>
                   {domainsData?.domains?.length || 0} Domains <span className=' text-gray-300 ml-1 mr-1'>|</span> {totalKeywords} keywords
                </div>
-               <div>
-                  <button
-                  data-testid="addDomainButton"
-                  className={'ml-2 inline-block py-2 text-blue-700 font-bold text-sm'}
-                  onClick={() => setShowAddDomain(true)}>
-                     <span
-                     className='text-center leading-4 mr-2 inline-block rounded-full w-7 h-7 pt-1 bg-blue-700 text-white font-bold text-lg'>+</span>
-                     <i className=' not-italic hidden lg:inline-block'>Add Domain</i>
-                  </button>
-               </div>
+               {canWrite && (
+                  <div>
+                     <button
+                     data-testid="addDomainButton"
+                     className={'ml-2 inline-block py-2 text-blue-700 font-bold text-sm'}
+                     onClick={() => setShowAddDomain(true)}>
+                        <span
+                        className='text-center leading-4 mr-2 inline-block rounded-full w-7 h-7 pt-1 bg-blue-700 text-white font-bold text-lg'>+</span>
+                        <i className=' not-italic hidden lg:inline-block'>Add Domain</i>
+                     </button>
+                  </div>
+               )}
             </div>
             <div className='flex w-full flex-col mb-8'>
                {domainsData?.domains && domainsData.domains.map((domain:DomainType) => {
@@ -126,18 +131,22 @@ const Domains: NextPage = () => {
                )}
                {!isLoading && domainsData && domainsData.domains && domainsData.domains.length === 0 && (
                   <div className='noDomains mt-4 p-5 py-12 rounded border text-center bg-white text-sm'>
-                     No Domains Found. Add a Domain to get started!
+                     {canWrite ? 'No Domains Found. Add a Domain to get started!' : 'No Domains Found.'}
                   </div>
                )}
             </div>
          </div>
 
-         <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
-            <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
-         </CSSTransition>
-         <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
-             <Settings closeSettings={() => setShowSettings(false)} />
-         </CSSTransition>
+         {canWrite && (
+            <CSSTransition in={showAddDomain} timeout={300} classNames="modal_anim" unmountOnExit mountOnEnter>
+               <AddDomain closeModal={() => setShowAddDomain(false)} domains={domainsData?.domains || []} />
+            </CSSTransition>
+         )}
+         {canWrite && (
+            <CSSTransition in={showSettings} timeout={300} classNames="settings_anim" unmountOnExit mountOnEnter>
+                <Settings closeSettings={() => setShowSettings(false)} />
+            </CSSTransition>
+         )}
          <Footer currentVersion={appSettings?.version ? appSettings.version : ''} />
          <Toaster position='bottom-center' containerClassName="react_toaster" />
       </div>

@@ -1,4 +1,13 @@
 /* eslint-disable no-unused-vars */
+type UserRole = 'admin' | 'seo' | 'viewer'
+
+type AppUser = {
+   ID: number,
+   username: string,
+   role: UserRole,
+   created?: string,
+}
+
 type ScrapeStrategy = 'basic' | 'custom' | 'smart'
 
 type DomainType = {

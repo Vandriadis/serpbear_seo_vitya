@@ -9,6 +9,7 @@ import KeywordIdeasTable from '../../components/ideas/KeywordIdeasTable';
 import { exportKeywordIdeas } from '../../utils/client/exportcsv';
 import { useFetchKeywordIdeas, useMutateKeywordIdeas } from '../../services/adwords';
 import { useFetchSettings } from '../../services/settings';
+import { canWriteRole, useCurrentUser } from '../../services/auth';
 import Settings from '../../components/settings/Settings';
 import SelectField from '../../components/common/SelectField';
 import allCountries, { adwordsLanguages } from '../../utils/countries';
@@ -23,9 +24,18 @@ const Research: NextPage = () => {
    const [seedKeywords, setSeedKeywords] = useState('');
 
    const { data: appSettings } = useFetchSettings();
+   const { data: currentUserData } = useCurrentUser();
+   const canWrite = canWriteRole(currentUserData?.user?.role);
+
+   useEffect(() => {
+      if (currentUserData?.user && !canWrite) {
+         router.replace('/domains');
+      }
+   }, [currentUserData?.user, canWrite, router]);
+
    const adwordsConnected = !!(appSettings && appSettings?.settings?.adwords_refresh_token
       && appSettings?.settings?.adwords_developer_token, appSettings?.settings?.adwords_account_id);
-   const { data: keywordIdeasData, isLoading: isLoadingIdeas, isError: errorLoadingIdeas } = useFetchKeywordIdeas(router, adwordsConnected);
+   const { data: keywordIdeasData, isLoading: isLoadingIdeas, isError: errorLoadingIdeas } = useFetchKeywordIdeas(router, adwordsConnected && canWrite);
    const { mutate: updateKeywordIdeas, isLoading: isUpdatingIdeas } = useMutateKeywordIdeas(router);
 
    const keywordIdeas:IdeaKeyword[] = keywordIdeasData?.data?.keywords || [];
@@ -55,6 +65,10 @@ const Research: NextPage = () => {
    const buttonStyle = 'leading-6 inline-block px-2 py-2 text-gray-500 hover:text-gray-700';
    const buttonLabelStyle = 'ml-2 text-sm not-italic lg:invisible lg:opacity-0';
    const labelStyle = 'mb-2 font-semibold inline-block text-sm text-gray-700 capitalize w-full';
+
+   if (currentUserData?.user && !canWrite) {
+      return null;
+   }
 
    return (
       <div className={'Login'}>

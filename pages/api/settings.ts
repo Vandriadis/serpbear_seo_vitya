@@ -2,7 +2,7 @@ import { writeFile, readFile, rename, stat } from 'fs/promises';
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Cryptr from 'cryptr';
 import getConfig from 'next/config';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 import allScrapers from '../../scrapers/index';
 
 type SettingsGetResponse = {
@@ -11,24 +11,35 @@ type SettingsGetResponse = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'GET') {
-      return getSettings(req, res);
+      return getSettings(req, res, auth.user?.role);
    }
    if (req.method === 'PUT') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return updateSettings(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });
 }
 
-const getSettings = async (req: NextApiRequest, res: NextApiResponse<SettingsGetResponse>) => {
+const getSettings = async (req: NextApiRequest, res: NextApiResponse<SettingsGetResponse>, role?: UserRole) => {
    const settings = await getAppSettings();
    if (settings) {
       const { publicRuntimeConfig } = getConfig();
       const version = publicRuntimeConfig?.version;
+      if (role === 'viewer') {
+         return res.status(200).json({
+            settings: {
+               scraper_type: settings.scraper_type,
+               search_console_integrated: !!(settings.search_console_client_email && settings.search_console_private_key),
+               keywordsColumns: settings.keywordsColumns,
+               version,
+            },
+         });
+      }
       return res.status(200).json({ settings: { ...settings, version } });
    }
    return res.status(400).json({ error: 'Error Loading Settings!' });

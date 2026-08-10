@@ -24,6 +24,7 @@ type KeywordProps = {
    style: Object,
    maxTitleColumnWidth: number,
    tableColumns? : string[]
+   readOnly?: boolean
 }
 
 const Keyword = (props: KeywordProps) => {
@@ -43,6 +44,7 @@ const Keyword = (props: KeywordProps) => {
       scDataType = 'threeDays',
       tableColumns = [],
       maxTitleColumnWidth,
+      readOnly = false,
    } = props;
    const {
       keyword, domain, ID, city, position, url = '', lastUpdated, country, sticky, history = {}, updating = false, lastUpdateError = false, volume,
@@ -98,13 +100,15 @@ const Keyword = (props: KeywordProps) => {
       lg:flex lg:justify-between lg:items-center ${selected ? ' bg-indigo-50 keyword--selected' : ''} ${lastItem ? 'border-b-0' : ''}`}>
 
          <div className=' w-3/4 font-semibold cursor-pointer lg:flex-1 lg:shrink-0 lg:basis-28 lg:w-auto lg:flex lg:items-center'>
-            <button
-               className={`p-0 mr-2 leading-[0px] inline-block rounded-sm pt-0 px-[1px] pb-[3px] border 
-               ${selected ? ' bg-blue-700 border-blue-700 text-white' : 'text-transparent'}`}
-               onClick={() => selectKeyword(ID)}
-               >
-                  <Icon type="check" size={10} />
-            </button>
+            {!readOnly && (
+               <button
+                  className={`p-0 mr-2 leading-[0px] inline-block rounded-sm pt-0 px-[1px] pb-[3px] border 
+                  ${selected ? ' bg-blue-700 border-blue-700 text-white' : 'text-transparent'}`}
+                  onClick={() => selectKeyword(ID)}
+                  >
+                     <Icon type="check" size={10} />
+               </button>
+            )}
             <a
             style={{ maxWidth: `${maxTitleColumnWidth - 35}px` }}
             className={'py-2 hover:text-blue-600 lg:flex lg:items-center w-full'}
@@ -193,35 +197,37 @@ const Keyword = (props: KeywordProps) => {
             </div>
          )}
 
-         <div className='absolute right-4 mt-[-10px] top-2 lg:flex-1 lg:basis-5 lg:grow-0 lg:shrink-0 lg:relative lg:right-[-10px]'>
-            <button
-            className={`keyword_dots rounded px-1 text-indigo-300 hover:bg-indigo-50 ${showOptions ? 'bg-indigo-50 text-indigo-600 ' : ''}`}
-            onClick={() => setShowOptions(!showOptions)}>
-               <Icon type="dots" size={20} />
-            </button>
-            {showOptions && (
-               <ul className='keyword_options customShadow absolute w-[180px] right-0 bg-white rounded border z-20'>
-                  <li>
-                     <a className={optionsButtonStyle} onClick={() => { refreshkeyword([ID]); setShowOptions(false); }}>
-                     <span className=' bg-indigo-100 text-blue-700 px-1 rounded'><Icon type="reload" size={11} /></span> Refresh Keyword</a>
-                  </li>
-                  <li>
-                     <a className={optionsButtonStyle}
-                     onClick={() => { favoriteKeyword({ keywordID: ID, sticky: !sticky }); setShowOptions(false); }}>
-                        <span className=' bg-yellow-300/30 text-yellow-500 px-1 rounded'>
-                           <Icon type="star" size={14} />
-                        </span> { sticky ? 'Unfavorite Keyword' : 'Favorite Keyword'}
-                     </a>
-                  </li>
-                  <li><a className={optionsButtonStyle} onClick={() => { manageTags(); setShowOptions(false); }}>
-                     <span className=' bg-green-100 text-green-500 px-1 rounded'><Icon type="tags" size={14} /></span> Add/Edit Tags</a>
-                  </li>
-                  <li><a className={optionsButtonStyle} onClick={() => { removeKeyword([ID]); setShowOptions(false); }}>
-                     <span className=' bg-red-100 text-red-600 px-1 rounded'><Icon type="trash" size={14} /></span> Remove Keyword</a>
-                  </li>
-               </ul>
-            )}
-         </div>
+         {!readOnly && (
+            <div className='absolute right-4 mt-[-10px] top-2 lg:flex-1 lg:basis-5 lg:grow-0 lg:shrink-0 lg:relative lg:right-[-10px]'>
+               <button
+               className={`keyword_dots rounded px-1 text-indigo-300 hover:bg-indigo-50 ${showOptions ? 'bg-indigo-50 text-indigo-600 ' : ''}`}
+               onClick={() => setShowOptions(!showOptions)}>
+                  <Icon type="dots" size={20} />
+               </button>
+               {showOptions && (
+                  <ul className='keyword_options customShadow absolute w-[180px] right-0 bg-white rounded border z-20'>
+                     <li>
+                        <a className={optionsButtonStyle} onClick={() => { refreshkeyword([ID]); setShowOptions(false); }}>
+                        <span className=' bg-indigo-100 text-blue-700 px-1 rounded'><Icon type="reload" size={11} /></span> Refresh Keyword</a>
+                     </li>
+                     <li>
+                        <a className={optionsButtonStyle}
+                        onClick={() => { favoriteKeyword({ keywordID: ID, sticky: !sticky }); setShowOptions(false); }}>
+                           <span className=' bg-yellow-300/30 text-yellow-500 px-1 rounded'>
+                              <Icon type="star" size={14} />
+                           </span> { sticky ? 'Unfavorite Keyword' : 'Favorite Keyword'}
+                        </a>
+                     </li>
+                     <li><a className={optionsButtonStyle} onClick={() => { manageTags(); setShowOptions(false); }}>
+                        <span className=' bg-green-100 text-green-500 px-1 rounded'><Icon type="tags" size={14} /></span> Add/Edit Tags</a>
+                     </li>
+                     <li><a className={optionsButtonStyle} onClick={() => { removeKeyword([ID]); setShowOptions(false); }}>
+                        <span className=' bg-red-100 text-red-600 px-1 rounded'><Icon type="trash" size={14} /></span> Remove Keyword</a>
+                     </li>
+                  </ul>
+               )}
+            </div>
+         )}
 
          {lastUpdateError && lastUpdateError.date && showPositionError && (
             <div className={`absolute p-2 bg-white z-30 border border-red-200 rounded w-[220px] left-4 shadow-sm text-xs 

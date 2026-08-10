@@ -10,15 +10,18 @@ type DomainGetResponse = {
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-   const authorized = verifyUser(req, res);
-   if (authorized === 'authorized' && req.method === 'GET') {
-      await db.sync();
-      return getDomain(req, res);
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
-   return res.status(401).json({ error: authorized });
+   if (req.method === 'GET') {
+      await db.sync();
+      return getDomain(req, res, auth.user?.role);
+   }
+   return res.status(401).json({ error: 'Invalid Method' });
 }
 
-const getDomain = async (req: NextApiRequest, res: NextApiResponse<DomainGetResponse>) => {
+const getDomain = async (req: NextApiRequest, res: NextApiResponse<DomainGetResponse>, role?: UserRole) => {
    if (!req.query.domain && typeof req.query.domain !== 'string') {
        return res.status(400).json({ error: 'Domain Name is Required!' });
    }
@@ -30,11 +33,20 @@ const getDomain = async (req: NextApiRequest, res: NextApiResponse<DomainGetResp
 
       if (parsedDomain && parsedDomain.search_console) {
          try {
-            const cryptr = new Cryptr(process.env.SECRET as string);
-            const scData = JSON.parse(parsedDomain.search_console);
-            scData.client_email = scData.client_email ? cryptr.decrypt(scData.client_email) : '';
-            scData.private_key = scData.private_key ? cryptr.decrypt(scData.private_key) : '';
-            parsedDomain.search_console = JSON.stringify(scData);
+            if (role === 'viewer') {
+               const scData = JSON.parse(parsedDomain.search_console);
+               parsedDomain.search_console = JSON.stringify({
+                  ...scData,
+                  client_email: scData.client_email ? 'true' : '',
+                  private_key: scData.private_key ? 'true' : '',
+               });
+            } else {
+               const cryptr = new Cryptr(process.env.SECRET as string);
+               const scData = JSON.parse(parsedDomain.search_console);
+               scData.client_email = scData.client_email ? cryptr.decrypt(scData.client_email) : '';
+               scData.private_key = scData.private_key ? cryptr.decrypt(scData.private_key) : '';
+               parsedDomain.search_console = JSON.stringify(scData);
+            }
          } catch (error) {
             console.log('[Error] Parsing Search Console Keys.');
          }

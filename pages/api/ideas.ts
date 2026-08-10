@@ -1,6 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
 import db from '../../database/database';
-import verifyUser from '../../utils/verifyUser';
+import verifyUser, { denyUnlessWrite } from '../../utils/verifyUser';
 import {
    KeywordIdeasDatabase, getAdwordsCredentials, getAdwordsKeywordIdeas, getLocalKeywordIdeas, updateLocalKeywordIdeas,
 } from '../../utils/adwords';
@@ -17,17 +17,20 @@ type keywordsIdeasGetResp = {
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
    await db.sync();
-   const authorized = verifyUser(req, res);
-   if (authorized !== 'authorized') {
-      return res.status(401).json({ error: authorized });
+   const auth = verifyUser(req, res);
+   if (!auth.ok) {
+      return res.status(401).json({ error: auth.error });
    }
    if (req.method === 'GET') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return getKeywordIdeas(req, res);
    }
    if (req.method === 'POST') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return updateKeywordIdeas(req, res);
    }
    if (req.method === 'PUT') {
+      if (denyUnlessWrite(auth, res)) { return undefined; }
       return favoriteKeywords(req, res);
    }
    return res.status(502).json({ error: 'Unrecognized Route.' });

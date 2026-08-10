@@ -17,6 +17,7 @@ import { useFetchKeywordIdeas } from '../../../../services/adwords';
 import KeywordIdeasUpdater from '../../../../components/ideas/KeywordIdeasUpdater';
 import Modal from '../../../../components/common/Modal';
 import Footer from '../../../../components/common/Footer';
+import { canWriteRole, useCurrentUser } from '../../../../services/auth';
 
 const DiscoverPage: NextPage = () => {
    const router = useRouter();
@@ -28,10 +29,12 @@ const DiscoverPage: NextPage = () => {
 
    const { data: appSettings } = useFetchSettings();
    const { data: domainsData } = useFetchDomains(router);
+   const { data: currentUserData } = useCurrentUser();
+   const readOnly = !canWriteRole(currentUserData?.user?.role);
    const adwordsConnected = !!(appSettings && appSettings?.settings?.adwords_refresh_token
       && appSettings?.settings?.adwords_developer_token, appSettings?.settings?.adwords_account_id);
    const searchConsoleConnected = !!(appSettings && appSettings?.settings?.search_console_integrated);
-   const { data: keywordIdeasData, isLoading: isLoadingIdeas, isError: errorLoadingIdeas } = useFetchKeywordIdeas(router, adwordsConnected);
+   const { data: keywordIdeasData, isLoading: isLoadingIdeas, isError: errorLoadingIdeas } = useFetchKeywordIdeas(router, adwordsConnected && !readOnly);
    const theDomains: DomainType[] = (domainsData && domainsData.domains) || [];
    const keywordIdeas:IdeaKeyword[] = keywordIdeasData?.data?.keywords || [];
    const favorites:IdeaKeyword[] = keywordIdeasData?.data?.favorites || [];
@@ -44,6 +47,16 @@ const DiscoverPage: NextPage = () => {
       }
       return active;
    }, [router.query.slug, domainsData]);
+
+   React.useEffect(() => {
+      if (readOnly && activDomain?.slug) {
+         router.replace(`/domain/${activDomain.slug}`);
+      }
+   }, [readOnly, activDomain?.slug, router]);
+
+   if (readOnly) {
+      return null;
+   }
 
    return (
       <div className="Domain ">

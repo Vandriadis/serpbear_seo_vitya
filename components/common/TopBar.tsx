@@ -3,6 +3,7 @@ import { useRouter } from 'next/router';
 import React, { useState } from 'react';
 import toast from 'react-hot-toast';
 import Icon from './Icon';
+import { canWriteRole, useCurrentUser } from '../../services/auth';
 
 type TopbarProps = {
    showSettings: Function,
@@ -13,6 +14,10 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
    const [showMobileMenu, setShowMobileMenu] = useState<boolean>(false);
    const router = useRouter();
    const isDomainsPage = router.pathname === '/domains';
+   const { data: currentUserData } = useCurrentUser();
+   const role = currentUserData?.user?.role;
+   const canWrite = canWriteRole(role);
+   const isViewer = role === 'viewer';
 
    const logoutUser = async () => {
       try {
@@ -35,7 +40,9 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
 
          <h3 className={`p-4 text-base font-bold text-blue-700 ${isDomainsPage ? 'lg:pl-0' : 'lg:hidden'}`}>
             <span className=' relative top-[3px] mr-1'><Icon type="logo" size={24} color="#364AFF" /></span> SerpBear
-            <button className='px-3 py-1 font-bold text-blue-700  lg:hidden ml-3 text-lg' onClick={() => showAddModal()}>+</button>
+            {canWrite && (
+               <button className='px-3 py-1 font-bold text-blue-700  lg:hidden ml-3 text-lg' onClick={() => showAddModal()}>+</button>
+            )}
          </h3>
          {!isDomainsPage && router.asPath !== '/research' && (
             <Link href={'/domains'} passHref={true}>
@@ -59,18 +66,29 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
                      </a>
                   </Link>
                </li>
-               <li className={`block lg:inline-block lg:ml-5 ${router.asPath === '/research' ? ' text-blue-700' : ''}`}>
-                  <Link href={'/research'} passHref={true}>
-                     <a className='block px-3 py-2 cursor-pointer'>
-                        <Icon type="research" color={router.asPath === '/research' ? '#1d4ed8' : '#888'} size={14} /> Research
+               {!isViewer && (
+                  <li className={`block lg:inline-block lg:ml-5 ${router.asPath === '/research' ? ' text-blue-700' : ''}`}>
+                     <Link href={'/research'} passHref={true}>
+                        <a className='block px-3 py-2 cursor-pointer'>
+                           <Icon type="research" color={router.asPath === '/research' ? '#1d4ed8' : '#888'} size={14} /> Research
+                        </a>
+                     </Link>
+                  </li>
+               )}
+               {!isViewer && (
+                  <li className='block lg:inline-block lg:ml-5'>
+                     <a className='block px-3 py-2 cursor-pointer' onClick={() => showSettings()}>
+                        <Icon type="settings-alt" color={'#888'} size={14} /> Settings
                      </a>
-                  </Link>
-               </li>
-               <li className='block lg:inline-block lg:ml-5'>
-                  <a className='block px-3 py-2 cursor-pointer' onClick={() => showSettings()}>
-                     <Icon type="settings-alt" color={'#888'} size={14} /> Settings
-                  </a>
-               </li>
+                  </li>
+               )}
+               {currentUserData?.user?.username && (
+                  <li className='block lg:inline-block lg:ml-5'>
+                     <span className='block px-3 py-2 text-xs text-gray-400 capitalize'>
+                        {currentUserData.user.username} ({currentUserData.user.role})
+                     </span>
+                  </li>
+               )}
                <li className='block lg:inline-block lg:ml-5'>
                   <a className='block px-3 py-2 cursor-pointer' href='https://docs.serpbear.com/' target="_blank" rel='noreferrer'>
                      <Icon type="question" color={'#888'} size={14} /> Help
