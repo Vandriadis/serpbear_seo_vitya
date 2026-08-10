@@ -37,16 +37,8 @@ const DiscoverPage: NextPage = () => {
       return keywordsData?.data && keywordsData.data[scDateFilter] ? keywordsData.data[scDateFilter] : [];
    }, [keywordsData, scDateFilter]);
 
-   const theKeywordsCount = useMemo(() => {
-      return theKeywords.reduce<Map<string, number>>((r, o) => {
-         const key = `${o.device}-${o.country}-${o.keyword}`;
-         const item = r.get(key) || 0;
-         return r.set(key, item + 1);
-      }, new Map()) || [];
-   }, [theKeywords]);
-
-   const theKeywordsReduced : SearchAnalyticsItem[] = useMemo(() => {
-      return [...theKeywords.reduce<Map<string, SearchAnalyticsItem>>((r, o) => {
+   const theKeywordsReduced : (SearchAnalyticsItem & { positionWeighted: number })[] = useMemo(() => {
+      return [...theKeywords.reduce<Map<string, SearchAnalyticsItem & { positionWeighted: number }>>((r, o) => {
          const key = `${o.device}-${o.country}-${o.keyword}`;
          const item = r.get(key) || { ...o,
             ...{
@@ -54,28 +46,26 @@ const DiscoverPage: NextPage = () => {
             impressions: 0,
             ctr: 0,
             position: 0,
+            positionWeighted: 0,
             },
          };
          item.clicks += o.clicks;
          item.impressions += o.impressions;
-         item.ctr = o.ctr + item.ctr;
-         item.position = o.position + item.position;
+         item.positionWeighted += o.position * o.impressions;
          return r.set(key, item);
       }, new Map()).values()];
    }, [theKeywords]);
 
    const theKeywordsGrouped : SearchAnalyticsItem[] = useMemo(() => {
-      return [...theKeywordsReduced.map<SearchAnalyticsItem>((o: SearchAnalyticsItem) => {
-         const key = `${o.device}-${o.country}-${o.keyword}`;
-         const count = theKeywordsCount?.get(key) || 0;
-         return { ...o,
-            ...{
-            ctr: Math.round((o.ctr / count) * 100) / 100,
-            position: Math.round(o.position / count),
-            },
+      return theKeywordsReduced.map((o) => {
+         const { positionWeighted, ...rest } = o;
+         return {
+            ...rest,
+            ctr: o.impressions > 0 ? Math.round(((o.clicks / o.impressions) * 100) * 100) / 100 : 0,
+            position: o.impressions > 0 ? Math.round(positionWeighted / o.impressions) : 0,
          };
-      })];
-   }, [theKeywordsReduced, theKeywordsCount]);
+      });
+   }, [theKeywordsReduced]);
 
    const activDomain: DomainType|null = useMemo(() => {
       let active:DomainType|null = null;

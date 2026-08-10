@@ -33,19 +33,19 @@ export const sortInsightItems = (items:SCInsightItem[], sortBy: string = 'clicks
  */
 export const getCountryInsight = (SCData:SCDomainDataType, sortBy:string = 'clicks', queryDate:string = 'thirtyDays') : SCInsightItem[] => {
    const keywordsCounts: { [key:string]: string[] } = {};
-   const countryItems: { [key:string]: SCInsightItem } = {};
+   const countryItems: { [key:string]: SCInsightItem & { positionWeighted: number } } = {};
    const dateKey = queryDate as keyof SCDomainDataType;
    const scData = SCData[dateKey] ? SCData[dateKey] as SearchAnalyticsItem[] : [];
    const allCountries: string[] = [...new Set(scData.map((item) => item.country))];
 
    allCountries.forEach((countryKey:string) => {
-      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0, positionWeighted: 0 };
       scData.forEach((itm) => {
          if (itm.country === countryKey) {
             itemData.clicks += itm.clicks;
             itemData.impressions += itm.impressions;
             itemData.ctr += itm.ctr;
-            itemData.position += itm.position;
+            itemData.positionWeighted += itm.position * itm.impressions;
             if (!keywordsCounts[itm.country]) {
                keywordsCounts[itm.country] = [];
             }
@@ -58,10 +58,12 @@ export const getCountryInsight = (SCData:SCDomainDataType, sortBy:string = 'clic
    });
 
    const countryInsight: SCInsightItem[] = Object.keys(countryItems).map((countryCode:string) => {
+      const item = countryItems[countryCode];
       return {
-         ...countryItems[countryCode],
-         position: Math.round(countryItems[countryCode].position / keywordsCounts[countryCode].length),
-         ctr: countryItems[countryCode].ctr / keywordsCounts[countryCode].length,
+         clicks: item.clicks,
+         impressions: item.impressions,
+         position: item.impressions > 0 ? Math.round(item.positionWeighted / item.impressions) : 0,
+         ctr: item.impressions > 0 ? (item.clicks / item.impressions) * 100 : 0,
          keywords: keywordsCounts[countryCode].length,
          country: countryCode,
       };
@@ -78,39 +80,38 @@ export const getCountryInsight = (SCData:SCDomainDataType, sortBy:string = 'clic
  * @returns {SCInsightItem[]}
  */
 export const getKeywordsInsight = (SCData:SCDomainDataType, sortBy:string = 'clicks', queryDate:string = 'thirtyDays') : SCInsightItem[] => {
-   const keywordItems: { [key:string]: SCInsightItem } = {};
-   const keywordCounts: { [key:string]: number } = {};
+   const keywordItems: { [key:string]: SCInsightItem & { positionWeighted: number } } = {};
    const countriesCount: { [key:string]: string[] } = {};
    const dateKey = queryDate as keyof SCDomainDataType;
    const scData = SCData[dateKey] ? SCData[dateKey] as SearchAnalyticsItem[] : [];
    const allKeywords: string[] = [...new Set(scData.map((item) => item.keyword))];
 
    allKeywords.forEach((keyword:string) => {
-      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0, positionWeighted: 0 };
       const keywordKey = keyword.replaceAll(' ', '_');
       scData.forEach((itm) => {
          if (itm.keyword === keyword) {
             itemData.clicks += itm.clicks;
             itemData.impressions += itm.impressions;
-            itemData.ctr += itm.ctr;
-            itemData.position += itm.position;
+            itemData.positionWeighted += itm.position * itm.impressions;
             if (!countriesCount[keywordKey]) {
                countriesCount[keywordKey] = [];
             }
             if (countriesCount[keywordKey] && !countriesCount[keywordKey].includes(itm.country)) {
-               countriesCount[keywordKey].push(itm.keyword);
+               countriesCount[keywordKey].push(itm.country);
             }
-            keywordCounts[keywordKey] = keywordCounts[keywordKey] ? keywordCounts[keywordKey] + 1 : 1;
          }
       });
       keywordItems[keywordKey] = itemData;
    });
 
    const keywordInsight: SCInsightItem[] = Object.keys(keywordItems).map((keyword:string) => {
+      const item = keywordItems[keyword];
       return {
-         ...keywordItems[keyword],
-         position: Math.round(keywordItems[keyword].position / keywordCounts[keyword]),
-         ctr: keywordItems[keyword].ctr / keywordCounts[keyword],
+         clicks: item.clicks,
+         impressions: item.impressions,
+         position: item.impressions > 0 ? Math.round(item.positionWeighted / item.impressions) : 0,
+         ctr: item.impressions > 0 ? (item.clicks / item.impressions) * 100 : 0,
          countries: countriesCount[keyword].length,
          keyword: keyword.replaceAll('_', ' '),
       };
@@ -127,40 +128,40 @@ export const getKeywordsInsight = (SCData:SCDomainDataType, sortBy:string = 'cli
  * @returns {SCInsightItem[]}
  */
 export const getPagesInsight = (SCData:SCDomainDataType, sortBy:string = 'clicks', queryDate:string = 'thirtyDays') : SCInsightItem[] => {
-   const pagesItems: { [key:string]: SCInsightItem } = {};
-   const keywordCounts: { [key:string]: number } = {};
+   const pagesItems: { [key:string]: SCInsightItem & { positionWeighted: number, keywordSet: Set<string> } } = {};
    const countriesCount: { [key:string]: string[] } = {};
    const dateKey = queryDate as keyof SCDomainDataType;
    const scData = SCData[dateKey] ? SCData[dateKey] as SearchAnalyticsItem[] : [];
    const allPages: string[] = [...new Set(scData.map((item) => item.page))];
 
    allPages.forEach((page:string) => {
-      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0 };
+      const itemData = { clicks: 0, impressions: 0, ctr: 0, position: 0, positionWeighted: 0, keywordSet: new Set<string>() };
       scData.forEach((itm) => {
          if (itm.page === page) {
             itemData.clicks += itm.clicks;
             itemData.impressions += itm.impressions;
-            itemData.ctr += itm.ctr;
-            itemData.position += itm.position;
+            itemData.positionWeighted += itm.position * itm.impressions;
+            itemData.keywordSet.add(itm.keyword);
             if (!countriesCount[page]) {
                countriesCount[page] = [];
             }
             if (countriesCount[page] && !countriesCount[page].includes(itm.country)) {
                countriesCount[page].push(itm.country);
             }
-            keywordCounts[page] = keywordCounts[page] ? keywordCounts[page] + 1 : 1;
          }
       });
       pagesItems[page] = itemData;
    });
 
    const pagesInsight: SCInsightItem[] = Object.keys(pagesItems).map((page:string) => {
+      const item = pagesItems[page];
       return {
-         ...pagesItems[page],
-         position: Math.round(pagesItems[page].position / keywordCounts[page]),
-         ctr: pagesItems[page].ctr / keywordCounts[page],
+         clicks: item.clicks,
+         impressions: item.impressions,
+         position: item.impressions > 0 ? Math.round(item.positionWeighted / item.impressions) : 0,
+         ctr: item.impressions > 0 ? (item.clicks / item.impressions) * 100 : 0,
          countries: countriesCount[page].length,
-         keywords: keywordCounts[page],
+         keywords: item.keywordSet.size,
          page,
       };
    });
