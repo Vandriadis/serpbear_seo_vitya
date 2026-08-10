@@ -71,6 +71,7 @@ const UserSettings = () => {
                            <button
                               className='text-red-500 text-xs font-semibold'
                               onClick={() => {
+                                 // eslint-disable-next-line no-alert
                                  if (window.confirm(`Delete user "${user.username}"?`)) {
                                     deleteUser(user.ID);
                                  }

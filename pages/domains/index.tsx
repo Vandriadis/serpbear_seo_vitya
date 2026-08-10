@@ -106,7 +106,8 @@ const Domains: NextPage = () => {
                      className={'ml-2 inline-block py-2 text-blue-700 font-bold text-sm'}
                      onClick={() => setShowAddDomain(true)}>
                         <span
-                        className='text-center leading-4 mr-2 inline-block rounded-full w-7 h-7 pt-1 bg-blue-700 text-white font-bold text-lg'>+</span>
+                        className={'text-center leading-4 mr-2 inline-block rounded-full '
+                        + 'w-7 h-7 pt-1 bg-blue-700 text-white font-bold text-lg'}>+</span>
                         <i className=' not-italic hidden lg:inline-block'>Add Domain</i>
                      </button>
                   </div>
