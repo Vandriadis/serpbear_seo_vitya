@@ -209,7 +209,14 @@ const SCKeywordsTable = ({ domain, keywords = [], isLoading = true, isConsoleInt
                      )}
                      {!isConsoleIntegrated && (
                         <p className=' p-9 pt-[10%] text-center text-gray-500'>
-                        Google Search Console has not been Integrated yet. Please follow <a className='text-indigo-600 underline cursor-pointer' onClick={() => window.dispatchEvent(new CustomEvent('serpbear:open-help', { detail: 'gsc' }))}>These Steps</a> to integrate Google Search Data for this Domain.
+                           Google Search Console has not been Integrated yet. Please follow{' '}
+                           <a
+                              className='text-indigo-600 underline cursor-pointer'
+                              onClick={() => window.dispatchEvent(new CustomEvent('serpbear:open-help', { detail: 'gsc' }))}
+                           >
+                              These Steps
+                           </a>
+                           {' '}to integrate Google Search Data for this Domain.
                         </p>
                      )}
                   </div>

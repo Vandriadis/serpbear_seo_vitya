@@ -16,7 +16,12 @@ const SidePanel = ({ children, closePanel, width = 'medium', position = 'right',
       e.nativeEvent.stopImmediatePropagation();
       if (e.target === e.currentTarget) { closePanel(); }
    };
-   const widthClass = width === 'large' ? 'max-w-3xl' : width === 'small' ? 'max-w-sm' : 'max-w-md';
+   const widthClasses: Record<NonNullable<SidePanelProps['width']>, string> = {
+      large: 'max-w-3xl',
+      medium: 'max-w-md',
+      small: 'max-w-sm',
+   };
+   const widthClass = widthClasses[width];
    return (
        <div className="SidePanel fixed w-full h-screen top-0 left-0 z-50" onClick={closeOnBGClick}>
          <div className={`absolute w-full ${widthClass} border-l border-l-gray-400 bg-white customShadow top-0 

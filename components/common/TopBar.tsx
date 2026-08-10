@@ -31,7 +31,7 @@ const TopBar = ({ showSettings, showAddModal }:TopbarProps) => {
 
    useEffect(() => {
       const openHelp = (event: Event) => {
-         const detail = (event as CustomEvent<string>).detail;
+         const { detail } = event as CustomEvent<string>;
          setHelpSection(typeof detail === 'string' && detail ? detail : 'overview');
          setShowHelp(true);
          setShowMobileMenu(false);

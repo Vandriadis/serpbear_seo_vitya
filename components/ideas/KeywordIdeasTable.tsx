@@ -229,7 +229,14 @@ const IdeasKeywordsTable = ({
                      )}
                      {!isAdwordsIntegrated && (
                         <p className=' p-9 pt-[10%] text-center text-gray-500'>
-                           Google Ads has not been Integrated yet. Please follow <a className='text-indigo-600 underline cursor-pointer' onClick={() => window.dispatchEvent(new CustomEvent('serpbear:open-help', { detail: 'ideas' }))}>These Steps</a> to integrate Google Ads.
+                           Google Ads has not been Integrated yet. Please follow{' '}
+                           <a
+                              className='text-indigo-600 underline cursor-pointer'
+                              onClick={() => window.dispatchEvent(new CustomEvent('serpbear:open-help', { detail: 'ideas' }))}
+                           >
+                              These Steps
+                           </a>
+                           {' '}to integrate Google Ads.
                         </p>
                      )}
                   </div>

@@ -296,7 +296,12 @@ const Help = ({ closeHelp, initialSection = 'overview' }: HelpProps) => {
                </div>
                <div ref={contentRef} className="help-body flex-1 overflow-y-auto styled-scrollbar px-5 py-4 text-sm text-gray-700">
                   <h4 className="text-base font-bold text-gray-900 mb-3">{current.title}</h4>
-                  <div className="help-content space-y-3 leading-relaxed [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_p]:mb-2 [&_.help-note]:bg-amber-50 [&_.help-note]:border [&_.help-note]:border-amber-100 [&_.help-note]:rounded [&_.help-note]:px-3 [&_.help-note]:py-2">
+                  <div
+                     className={`help-content space-y-3 leading-relaxed
+                        [&_ul]:list-disc [&_ul]:pl-5 [&_ol]:list-decimal [&_ol]:pl-5 [&_li]:mb-1 [&_p]:mb-2
+                        [&_.help-note]:bg-amber-50 [&_.help-note]:border [&_.help-note]:border-amber-100
+                        [&_.help-note]:rounded [&_.help-note]:px-3 [&_.help-note]:py-2`}
+                  >
                      {current.body}
                   </div>
                </div>
