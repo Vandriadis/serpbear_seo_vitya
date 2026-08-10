@@ -4,9 +4,9 @@ import SelectField from '../common/SelectField';
 import { useCreateUser, useDeleteUser, useFetchUsers, useUpdateUser } from '../../services/auth';
 
 const roleOptions = [
-   { label: 'Admin — full access + manage users', value: 'admin' },
-   { label: 'SEO — full access without user management', value: 'seo' },
-   { label: 'Viewer — read-only domains & keywords', value: 'viewer' },
+   { label: 'Admin — full access + users', value: 'admin' },
+   { label: 'SEO — full access, no users', value: 'seo' },
+   { label: 'Viewer — read-only', value: 'viewer' },
 ];
 
 const UserSettings = () => {

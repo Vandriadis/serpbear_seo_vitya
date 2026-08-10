@@ -97,8 +97,8 @@ const Settings = ({ closeSettings }:SettingsProps) => {
       }
    };
 
-   const tabStyle = `inline-block px-3 py-2 rounded-md  cursor-pointer text-xs lg:text-sm lg:mr-3 lg:px-4 select-none z-10
-   text-gray-600 border border-b-0 relative top-[1px] rounded-b-none`;
+   const tabStyle = `inline-flex items-center gap-1 px-2.5 py-2 rounded-md cursor-pointer text-xs
+   lg:text-sm select-none z-10 text-gray-600 border border-b-0 relative top-[1px] rounded-b-none whitespace-nowrap`;
    const tabStyleActive = 'bg-white text-blue-600 border-slate-200';
 
    return (
@@ -106,15 +106,15 @@ const Settings = ({ closeSettings }:SettingsProps) => {
             <div className="absolute w-full max-w-md bg-white customShadow top-0 right-0 h-screen" data-loading={isLoading} >
                {isLoading && <div className='absolute flex content-center items-center h-full'><Icon type="loading" size={24} /></div>}
                <div className='settings__header px-5 py-4 text-slate-500'>
-                  <h3 className=' text-black text-lg font-bold'>Settings</h3>
+                  <h3 className=' text-gray-900 text-lg font-bold'>Settings</h3>
                   <button
                   className=' absolute top-2 right-2 p-2 px- text-gray-400 hover:text-gray-700 transition-all hover:rotate-90'
                   onClick={() => closeSettings()}>
                      <Icon type='close' size={24} />
                   </button>
                </div>
-               <div className='border border-slate-200 px-3 py-4 pb-0 border-l-0 border-r-0 bg-[#f8f9ff]'>
-                  <ul>
+               <div className='settings__tabs border border-slate-200 px-2 pt-3 pb-0 border-l-0 border-r-0 bg-indigo-50'>
+                  <ul className='flex flex-nowrap items-end gap-1 overflow-x-auto'>
                      <li
                      className={`${tabStyle} ${currentTab === 'scraper' ? tabStyleActive : 'border-transparent '}`}
                      onClick={() => setCurrentTab('scraper')}>

@@ -412,8 +412,27 @@ html.dark .bg-zinc-50 {
 
 html.dark .bg-indigo-50,
 html.dark .bg-\[\#ecf2ff\],
-html.dark .bg-\[\#FCFCFF\] {
+html.dark .bg-\[\#FCFCFF\],
+html.dark .bg-\[\#f8f9ff\] {
    background-color: var(--sb-accent-soft) !important;
+}
+
+html.dark .text-black,
+html.dark .text-gray-900 {
+   color: var(--sb-text) !important;
+}
+
+html.dark .settings__tabs {
+   background-color: var(--sb-surface-2) !important;
+   border-color: var(--sb-border) !important;
+}
+
+html.dark .settings__header h3 {
+   color: var(--sb-text) !important;
+}
+
+html.dark .hover\:text-gray-700:hover {
+   color: #e5e7eb !important;
 }
 
 html.dark .bg-indigo-100 {
