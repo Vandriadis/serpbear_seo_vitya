@@ -27,7 +27,8 @@ const ThemeToggle = ({ className = '' }: ThemeToggleProps) => {
          <span
             className={`theme-toggle__thumb absolute left-[3px] top-[3px] flex h-[22px] w-[22px] items-center
                justify-center rounded-full shadow-sm transition-transform duration-300 ease-out
-               ${isDark ? 'translate-x-[22px] bg-slate-100 text-slate-800' : 'translate-x-0 bg-white text-amber-500'}`}
+               ${isDark ? 'translate-x-[22px] text-slate-800' : 'translate-x-0 bg-white text-amber-500'}`}
+            style={isDark ? { backgroundColor: '#e8eaf0' } : undefined}
          >
             <Icon type={isDark ? 'moon' : 'sun'} size={13} color="currentColor" />
          </span>
