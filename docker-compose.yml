@@ -1,11 +1,13 @@
 services:
   app:
-    image: towfiqi/serpbear:latest
-    # Build from source instead of pulling the image:
-    # build: .
+    # Build local fork (multi-user roles). To use upstream image instead:
+    # image: towfiqi/serpbear:latest
+    build: .
     restart: unless-stopped
     ports:
       - "${PORT:-3000}:3000"
+    env_file:
+      - .env
     environment:
       - USER_NAME=${USER:-admin}
       - PASSWORD=${PASSWORD}
