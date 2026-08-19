@@ -142,8 +142,8 @@ const fetchAsync = async (
       });
       const getBody: DataForSEOResponse = await getRes.json();
 
-      if (getBody.status_code && getBody.status_code !== SUCCESS_STATUS) {
-         throw new Error(`DataForSEO Task GET ${getBody.status_code}: ${getBody.status_message || 'Unknown API error'}`);
+      if (getBody.status_code && getBody.status_code >= 50000) {
+         throw new Error(`DataForSEO API ${getBody.status_code}: ${getBody.status_message || 'Unknown API error'}`);
       }
 
       const resultTask = getBody.tasks && getBody.tasks[0];
@@ -154,7 +154,9 @@ const fetchAsync = async (
          return extractOrganicResults([resultTask]);
       }
 
-      if (resultTask.status_code && resultTask.status_code >= 40000) {
+      // 40601 = Task Not Found, 40602 = Task In Queue, 40603 = Task In Progress — keep polling
+      if (resultTask.status_code && resultTask.status_code >= 40000
+         && resultTask.status_code !== 40602 && resultTask.status_code !== 40603) {
          const msg = resultTask.status_message || 'Task failed';
          throw new Error(`DataForSEO Task GET ${resultTask.status_code}: ${msg}`);
       }
