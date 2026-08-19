@@ -315,7 +315,8 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
    const scraperClient = getScraperClient(keyword, settings, scraperObj, nativePagination);
 
    // If the scraper provides a custom async fetcher (e.g. DataForSEO async mode), use it.
-   if (scraperObj?.asyncFetcher && settings.dataforseo_mode === 'async') {
+   const useAsyncFetcher = scraperObj?.asyncFetcher && (settings.dataforseo_mode || 'async') === 'async';
+   if (useAsyncFetcher) {
       try {
          const extracted = await scraperObj.asyncFetcher(keyword, settings, countries);
          console.log(`[DataForSEO] ${keyword.keyword}: got ${extracted.length} results, looking for "${keyword.domain}"`);
@@ -354,8 +355,12 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
       if (res && scrapeResult) {
          const extracted = scraperObj?.serpExtractor
             ? scraperObj.serpExtractor(scrapeResult) : extractScrapedResult(scrapeResult, keyword.device);
-         await writeFile('result.txt', JSON.stringify(scrapeResult), { encoding: 'utf-8' }).catch((err) => { console.log(err); });
          const serp = getSerp(keyword.domain, extracted, subdomainMatching);
+         if (serp.position === 0 && extracted.length > 0) {
+            console.log(`[SERP] "${keyword.keyword}": domain "${keyword.domain}" not found in ${extracted.length} results`);
+            const urls = extracted.slice(0, 10).map((r: any) => `${r.position}. ${r.url}`);
+            console.log('[SERP] Top results:', urls.join(' | '));
+         }
          refreshedResults = {
             ID: keyword.ID, keyword: keyword.keyword,
             position: serp.position, url: serp.url, result: extracted, error: false,
