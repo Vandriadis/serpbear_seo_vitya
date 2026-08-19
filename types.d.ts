@@ -274,12 +274,16 @@ interface ScraperSettings {
    allowsCity?: boolean,
    /** Whether this scraper API handles its own pagination (e.g. num=100) and should bypass the app's pagination logic */
    nativePagination?: boolean,
+   /** HTTP method used to call the scraper API. Defaults to GET. */
+   method?: 'GET' | 'POST',
    /** Set your own custom HTTP header properties when making the scraper API request.
     * The function should return an object that contains all the header properties you want to pass to API request's header.
     * Example: `{'Cache-Control': 'max-age=0', 'Content-Type': 'application/json'}` */
    headers?(keyword:KeywordType, settings: SettingsType): Object,
    /** Construct the API URL for scraping the data through your Scraper's API */
    scrapeURL?(keyword:KeywordType, settings:SettingsType, countries:countryData, pagination?: ScraperPagination): string,
+   /** Build the request body for POST based scraper APIs. The returned value is JSON serialized before sending. */
+   payload?(keyword:KeywordType, settings:SettingsType, countries:countryData, pagination?: ScraperPagination): Object,
    /** Custom function to extract the serp result from the scraped data. The extracted data should be @return {scraperExtractedItem[]} */
    serpExtractor?(content:string): scraperExtractedItem[],
 }

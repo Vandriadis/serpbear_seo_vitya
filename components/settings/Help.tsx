@@ -138,6 +138,13 @@ const Help = ({ closeHelp, initialSection = 'overview' }: HelpProps) => {
                   Если позиции «зависли», проверьте API-ключ скрапера, лимиты провайдера
                   и ошибки у конкретного ключа (иконка ошибки / last update error).
                </p>
+               <p className="help-note">
+                  <strong>DataForSEO:</strong> в поле ключа вводится не токен, а пара <code>login:password</code> из
+                  кабинета DataForSEO (можно вставить и готовый base64-токен). Выдача берётся одним запросом
+                  Google Organic Live Advanced, а Scrape Strategy задаёт глубину: Basic — топ-10, Custom — по числу
+                  страниц, Smart — топ-100. Чем больше глубина, тем дороже запрос. Для ключей с городом название
+                  города должно совпадать со справочником локаций DataForSEO.
+               </p>
             </>
          ),
       },

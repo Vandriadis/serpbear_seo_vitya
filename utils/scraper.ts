@@ -97,7 +97,12 @@ export const getScraperClient = (
       const p = pagination || { start: 0, num: PAGE_SIZE };
       client = axiosClient.get(`https://www.google.com/search?num=${p.num}&start=${p.start}&q=${encodeURI(keyword.keyword)}`);
    } else {
-      client = fetch(apiURL, { method: 'GET', headers });
+      const method = scraper?.method || 'GET';
+      const requestInit: RequestInit = { method, headers };
+      if (method === 'POST' && scraper?.payload) {
+         requestInit.body = JSON.stringify(scraper.payload(keyword, settings, countries, pagination));
+      }
+      client = fetch(apiURL, requestInit);
    }
 
    return client;
@@ -323,11 +328,11 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
          refreshedResults = { ID: keyword.ID, keyword: keyword.keyword, position: serp.position, url: serp.url, result: extracted, error: false };
          console.log('[SERP]: ', keyword.keyword, serp.position, serp.url);
       } else {
-         scraperError = res.detail || res.error || 'Unknown Error';
+         scraperError = res.detail || res.error || res.status_message || 'Unknown Error';
          throw new Error(res);
       }
    } catch (error:any) {
-      refreshedResults.error = scraperError || 'Unknown Error';
+      refreshedResults.error = scraperError || error?.message || 'Unknown Error';
       if (settings.scraper_type === 'proxy' && error && error.response && error.response.statusText) {
          refreshedResults.error = `[${error.response.status}] ${error.response.statusText}`;
       } else if (settings.scraper_type === 'proxy' && error) {

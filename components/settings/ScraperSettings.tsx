@@ -68,11 +68,17 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
             <div className="settings__section__secret mb-5">
                <SecretField
                label='Scraper API Key or Token'
-               placeholder={'API Key/Token'}
+               placeholder={settings.scraper_type === 'dataforseo' ? 'login:password' : 'API Key/Token'}
                value={settings?.scaping_api || ''}
                hasError={settingsError?.type === 'no_api_key'}
                onChange={(value:string) => updateSettings('scaping_api', value)}
                />
+               {settings.scraper_type === 'dataforseo' && (
+                  <small className='text-gray-500 pt-2 block'>
+                     DataForSEO uses Basic auth. Paste your API credentials as <code>login:password</code> (the email and
+                     password from your DataForSEO dashboard), or an already base64 encoded token.
+                  </small>
+               )}
             </div>
          )}
          {settings.scraper_type === 'proxy' && (

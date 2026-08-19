@@ -18,7 +18,7 @@ const refreshAndUpdateKeywords = async (rawKeyword:Keyword[], settings:SettingsT
    const start = performance.now();
    const updatedKeywords: KeywordType[] = [];
 
-   if (['scrapingant', 'serpapi', 'searchapi'].includes(settings.scraper_type)) {
+   if (['scrapingant', 'serpapi', 'searchapi', 'dataforseo'].includes(settings.scraper_type)) {
       const refreshedResults = await refreshParallel(keywords, settings, domains);
       if (refreshedResults.length > 0) {
          for (const keyword of rawKeyword) {
