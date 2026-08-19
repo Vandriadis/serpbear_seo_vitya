@@ -82,7 +82,8 @@ const KeywordDetails = ({ keyword, closeDetails }:KeywordDetailsProps) => {
    }, [keywordSearchResult]);
 
    // Label shown when keyword is not found
-   const notFoundLabel = skippedCount > 0 ? `Not in First ${scrapedCount}` : 'Not in First 100';
+   const totalChecked = scrapedCount + skippedCount;
+   const notFoundLabel = totalChecked > 0 ? `Not in Top ${totalChecked}` : 'Not Found';
 
    const closeOnBGClick = (e:React.SyntheticEvent) => {
       e.stopPropagation();

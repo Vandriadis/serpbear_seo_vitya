@@ -318,7 +318,17 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
    if (scraperObj?.asyncFetcher && settings.dataforseo_mode === 'async') {
       try {
          const extracted = await scraperObj.asyncFetcher(keyword, settings, countries);
+         console.log(`[DataForSEO] ${keyword.keyword}: got ${extracted.length} results, looking for "${keyword.domain}"`);
+         if (extracted.length > 0 && extracted.length <= 5) {
+            console.log('[DataForSEO] All results:', extracted.map((r) => `${r.position}. ${r.url}`).join(' | '));
+         } else if (extracted.length > 5) {
+            console.log('[DataForSEO] First 5:', extracted.slice(0, 5).map((r) => `${r.position}. ${r.url}`).join(' | '));
+         }
          const serp = getSerp(keyword.domain, extracted, subdomainMatching);
+         if (serp.position === 0 && extracted.length > 0) {
+            const domains = [...new Set(extracted.map((r) => { try { return new URL(r.url).hostname; } catch { return r.url; } }))];
+            console.log(`[DataForSEO] Domain "${keyword.domain}" NOT found in ${extracted.length} results. Unique domains:`, domains.slice(0, 20).join(', '));
+         }
          refreshedResults = {
             ID: keyword.ID, keyword: keyword.keyword,
             position: serp.position, url: serp.url, result: extracted, error: false,
