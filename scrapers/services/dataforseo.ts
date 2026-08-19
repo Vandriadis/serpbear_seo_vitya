@@ -28,8 +28,8 @@ const DEFAULT_DEPTH = 10;
 const MAX_DEPTH_LIVE = 200;
 const MAX_DEPTH_ASYNC = 700;
 
-const POLL_INTERVAL_MS = 3000;
-const MAX_POLL_ATTEMPTS = 40;
+const POLL_INTERVAL_MS = 5000;
+const MAX_POLL_ATTEMPTS = 60;
 
 const buildBasicToken = (apiKey: string): string => {
    const key = (apiKey || '').trim();
@@ -81,7 +81,11 @@ const extractOrganicResults = (tasks: DataForSEOTask[]) => {
       throw new Error(`DataForSEO Error ${task.status_code}: ${msg}`);
    }
 
-   const items = (task.result && task.result[0] && task.result[0].items) || [];
+   const firstResult = task.result && task.result[0];
+   if (firstResult && (firstResult as any).check_url) {
+      console.log('[DataForSEO] check_url:', (firstResult as any).check_url);
+   }
+   const items = (firstResult && firstResult.items) || [];
    const extractedResult = [];
    for (const item of items) {
       if (item.type === 'organic' && item.title && item.url) {
@@ -154,9 +158,12 @@ const fetchAsync = async (
          return extractOrganicResults([resultTask]);
       }
 
-      // 40601 = Task Not Found, 40602 = Task In Queue, 40603 = Task In Progress — keep polling
-      if (resultTask.status_code && resultTask.status_code >= 40000
-         && resultTask.status_code !== 40602 && resultTask.status_code !== 40603) {
+      // 40602 = Task In Queue, 40603 = Task In Progress — keep polling
+      if (resultTask.status_code === 40602 || resultTask.status_code === 40603) {
+         console.log(`[DataForSEO] Task ${taskId} still pending (${resultTask.status_code}), attempt ${attempt + 1}/${MAX_POLL_ATTEMPTS}`);
+         continue;
+      }
+      if (resultTask.status_code && resultTask.status_code >= 40000) {
          const msg = resultTask.status_message || 'Task failed';
          throw new Error(`DataForSEO Task GET ${resultTask.status_code}: ${msg}`);
       }
