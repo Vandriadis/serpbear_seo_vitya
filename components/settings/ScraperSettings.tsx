@@ -44,15 +44,25 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
    const paginationLimitOptions: SelectionOption[] = Array.from({ length: 10 }, (_, i) => (
       { label: `${i + 1} Page${i > 0 ? 's' : ''}`, value: String(i + 1) }
    ));
-   const depthOptions: SelectionOption[] = [
+   const dfsMode = settings.dataforseo_mode || 'async';
+   const maxDepth = dfsMode === 'live' ? 200 : 700;
+   const allDepthOptions: SelectionOption[] = [
       { label: 'Top 10 — cheapest', value: '10' },
       { label: 'Top 20', value: '20' },
       { label: 'Top 30', value: '30' },
       { label: 'Top 50', value: '50' },
       { label: 'Top 100', value: '100' },
       { label: 'Top 200', value: '200' },
+      { label: 'Top 300', value: '300' },
       { label: 'Top 500', value: '500' },
-      { label: 'Top 700 — max', value: '700' },
+      { label: 'Top 700', value: '700' },
+   ];
+   const depthOptions = allDepthOptions.filter(
+      (o) => parseInt(o.value, 10) <= maxDepth,
+   );
+   const dfsModeOptions: SelectionOption[] = [
+      { label: 'Async — дешевле, depth до 700', value: 'async' },
+      { label: 'Live — мгновенно, depth до 200', value: 'live' },
    ];
    const isDataForSEO = settings.scraper_type === 'dataforseo';
    const allScrapers: SelectionOption[] = settings.available_scrapers ? settings.available_scrapers : [];
@@ -145,6 +155,29 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
             {settings.scraper_type !== 'none' && isDataForSEO && (
                <div className="settings__section__select mb-5">
                   <SelectField
+                     label='Режим запросов DataForSEO'
+                     options={dfsModeOptions}
+                     selected={[dfsMode]}
+                     defaultLabel="Select Mode"
+                     updateField={(updated:string[]) => {
+                        if (updated[0]) updateSettings('dataforseo_mode', updated[0]);
+                     }}
+                     multiple={false}
+                     rounded={'rounded'}
+                     minWidth={220}
+                  />
+                  <small className='text-gray-500 pt-2 block'>
+                     {dfsMode === 'async'
+                        ? 'Async: задача ставится и результат забирается позже. '
+                           + 'Дешевле ($0.0015/10 рез.), depth до 700.'
+                        : 'Live: результат мгновенно. '
+                           + 'Дороже ($0.0020/10 рез.), depth до 200.'}
+                  </small>
+               </div>
+            )}
+            {settings.scraper_type !== 'none' && isDataForSEO && (
+               <div className="settings__section__select mb-5">
+                  <SelectField
                      label='Глубина выдачи (depth)'
                      options={depthOptions}
                      selected={[String(settings?.dataforseo_depth || 10)]}
@@ -157,7 +190,7 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
                      minWidth={220}
                   />
                   <small className='text-gray-500 pt-2 block'>
-                     Сколько результатов выдачи запросить у DataForSEO.
+                     Сколько результатов выдачи запросить.
                      Оплата за каждые 10 результатов: Top 10 = 1×, Top 100 = 10×.
                   </small>
                </div>

@@ -118,6 +118,7 @@ type SettingsType = {
    scrape_pagination_limit?: number,
    scrape_smart_full_fallback?: boolean,
    dataforseo_depth?: number,
+   dataforseo_mode?: 'live' | 'async',
    failed_queue?: string[]
    version?: string,
    screenshot_key?: string,
@@ -287,4 +288,6 @@ interface ScraperSettings {
    payload?(keyword:KeywordType, settings:SettingsType, countries:countryData, pagination?: ScraperPagination): Object,
    /** Custom function to extract the serp result from the scraped data. The extracted data should be @return {scraperExtractedItem[]} */
    serpExtractor?(content:string): scraperExtractedItem[],
+   /** Optional async fetcher that replaces the default fetch pipeline (for scrapers that need POST→poll→GET). */
+   asyncFetcher?(keyword:KeywordType, settings:SettingsType, countries:countryData): Promise<KeywordLastResult[]>,
 }

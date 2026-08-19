@@ -121,6 +121,7 @@ export const getAppSettings = async () : Promise<SettingsType> => {
       scrape_pagination_limit: 5,
       scrape_smart_full_fallback: false,
       dataforseo_depth: 10,
+      dataforseo_mode: 'async',
       domain_tags: [],
    };
 
@@ -158,6 +159,7 @@ export const getAppSettings = async () : Promise<SettingsType> => {
          scrape_pagination_limit: settings.scrape_pagination_limit || 5,
          scrape_smart_full_fallback: settings.scrape_smart_full_fallback || false,
          dataforseo_depth: settings.dataforseo_depth || 10,
+         dataforseo_mode: settings.dataforseo_mode || 'async',
       };
    } catch (error) {
       console.log('Error Decrypting Settings API Keys!');

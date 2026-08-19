@@ -314,18 +314,42 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
    const nativePagination: ScraperPagination = { start: 0, num: 100, page: 1 };
    const scraperClient = getScraperClient(keyword, settings, scraperObj, nativePagination);
 
+   // If the scraper provides a custom async fetcher (e.g. DataForSEO async mode), use it.
+   if (scraperObj?.asyncFetcher && settings.dataforseo_mode === 'async') {
+      try {
+         const extracted = await scraperObj.asyncFetcher(keyword, settings, countries);
+         const serp = getSerp(keyword.domain, extracted, subdomainMatching);
+         refreshedResults = {
+            ID: keyword.ID, keyword: keyword.keyword,
+            position: serp.position, url: serp.url, result: extracted, error: false,
+         };
+         console.log('[SERP]: ', keyword.keyword, serp.position, serp.url);
+      } catch (error: any) {
+         refreshedResults.error = error?.message || 'Unknown Error';
+         console.log('[ERROR] Scraping Keyword : ', keyword.keyword);
+         console.log('[ERROR_MESSAGE]: ', error?.message);
+      }
+      return refreshedResults;
+   }
+
    if (!scraperClient) { return false; }
 
    let scraperError:any = null;
    try {
-      const res = scraperType === 'proxy' && settings.proxy ? await scraperClient : await scraperClient.then((result:any) => result.json());
-      const scraperResult = scraperObj?.resultObjectKey && res[scraperObj.resultObjectKey] ? res[scraperObj.resultObjectKey] : '';
+      const res = scraperType === 'proxy' && settings.proxy
+         ? await scraperClient : await scraperClient.then((result:any) => result.json());
+      const scraperResult = scraperObj?.resultObjectKey && res[scraperObj.resultObjectKey]
+         ? res[scraperObj.resultObjectKey] : '';
       const scrapeResult:string = (scraperResult || res.data || res.html || res.results || '');
       if (res && scrapeResult) {
-         const extracted = scraperObj?.serpExtractor ? scraperObj.serpExtractor(scrapeResult) : extractScrapedResult(scrapeResult, keyword.device);
+         const extracted = scraperObj?.serpExtractor
+            ? scraperObj.serpExtractor(scrapeResult) : extractScrapedResult(scrapeResult, keyword.device);
          await writeFile('result.txt', JSON.stringify(scrapeResult), { encoding: 'utf-8' }).catch((err) => { console.log(err); });
          const serp = getSerp(keyword.domain, extracted, subdomainMatching);
-         refreshedResults = { ID: keyword.ID, keyword: keyword.keyword, position: serp.position, url: serp.url, result: extracted, error: false };
+         refreshedResults = {
+            ID: keyword.ID, keyword: keyword.keyword,
+            position: serp.position, url: serp.url, result: extracted, error: false,
+         };
          console.log('[SERP]: ', keyword.keyword, serp.position, serp.url);
       } else {
          scraperError = res.detail || res.error || res.status_message || 'Unknown Error';
