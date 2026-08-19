@@ -99,8 +99,11 @@ const fetchSearchConsoleData = async (domain:DomainType, days:number, type?:stri
  * @returns The function `fetchDomainSCData` is returning a Promise that resolves to an object of type
  * `SCDomainDataType`.
  */
-export const fetchDomainSCData = async (domain:DomainType, scAPI?: SCAPISettings): Promise<SCDomainDataType> => {
-   const days = [3, 7, 30];
+export const fetchDomainSCData = async (
+   domain:DomainType, scAPI?: SCAPISettings, period?: number,
+): Promise<SCDomainDataType> => {
+   const statsDays = period || 30;
+   const days = [3, 7, statsDays];
    const scDomainData:SCDomainDataType = { threeDays: [], sevenDays: [], thirtyDays: [], lastFetched: '', lastFetchError: '', stats: [] };
    if (domain.domain && scAPI) {
       const theDomain = domain;
@@ -110,16 +113,18 @@ export const fetchDomainSCData = async (domain:DomainType, scAPI?: SCAPISettings
          if (Array.isArray(items)) {
             if (day === 3) scDomainData.threeDays = items as SearchAnalyticsItem[];
             if (day === 7) scDomainData.sevenDays = items as SearchAnalyticsItem[];
-            if (day === 30) scDomainData.thirtyDays = items as SearchAnalyticsItem[];
+            if (day === statsDays) scDomainData.thirtyDays = items as SearchAnalyticsItem[];
          } else if (items.error) {
             scDomainData.lastFetchError = items.errorMsg;
          }
       }
-      const stats = await fetchSearchConsoleData(theDomain, 30, 'stat', scAPI);
+      const stats = await fetchSearchConsoleData(theDomain, statsDays, 'stat', scAPI);
       if (stats && Array.isArray(stats) && stats.length > 0) {
          scDomainData.stats = stats as SearchAnalyticsStat[];
       }
-      await updateLocalSCData(domain.domain, scDomainData);
+      if (!period || period === 30) {
+         await updateLocalSCData(domain.domain, scDomainData);
+      }
    }
 
    return scDomainData;

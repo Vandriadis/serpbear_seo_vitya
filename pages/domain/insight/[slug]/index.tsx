@@ -2,8 +2,6 @@ import React, { useMemo, useState } from 'react';
 import type { NextPage } from 'next';
 import Head from 'next/head';
 import { useRouter } from 'next/router';
-// import { useQuery } from 'react-query';
-// import toast from 'react-hot-toast';
 import { CSSTransition } from 'react-transition-group';
 import Sidebar from '../../../../components/common/Sidebar';
 import TopBar from '../../../../components/common/TopBar';
@@ -25,15 +23,36 @@ const InsightPage: NextPage = () => {
    const [showSettings, setShowSettings] = useState(false);
    const [showAddDomain, setShowAddDomain] = useState(false);
    const [scDateFilter, setSCDateFilter] = useState('thirtyDays');
+   const [insightPeriod, setInsightPeriod] = useState(30);
+   const [compareEnabled, setCompareEnabled] = useState(false);
    const { data: appSettings } = useFetchSettings();
    const { data: domainsData } = useFetchDomains(router);
    const { data: currentUserData } = useCurrentUser();
    const readOnly = !canWriteRole(currentUserData?.user?.role);
    const scConnected = !!(appSettings && appSettings?.settings?.search_console_integrated);
-   const { data: insightData } = useFetchSCInsight(router, !!(domainsData?.domains?.length) && scConnected);
+   const domainLoaded = !!(domainsData?.domains?.length) && scConnected;
+   const { data: insightData, isLoading: insightLoading } = useFetchSCInsight(
+      router, domainLoaded, insightPeriod,
+   );
+   // Previous period: e.g. if period=30, fetch days 31-60 via period=60 then slice
+   // Simpler: use a dedicated offset-based approach — fetch previous N days by
+   // passing period * 2 and splitting. But GSC API doesn't support offset.
+   // Instead, we fetch the same period but shifted — not supported by our API.
+   // Simplest approach: fetch period*2 and split stats in half on the frontend.
+   const { data: compareData } = useFetchSCInsight(
+      router, domainLoaded && compareEnabled, insightPeriod * 2,
+   );
 
    const theDomains: DomainType[] = (domainsData && domainsData.domains) || [];
    const theInsight: InsightDataType = insightData && insightData.data ? insightData.data : {};
+
+   // Split the double-period stats into previous period (first half)
+   const prevPeriodStats = useMemo(() => {
+      if (!compareEnabled || !compareData?.data?.stats) return null;
+      const allStats: SearchAnalyticsStat[] = compareData.data.stats;
+      const halfIdx = Math.max(0, allStats.length - insightPeriod);
+      return allStats.slice(0, halfIdx);
+   }, [compareEnabled, compareData, insightPeriod]);
 
    const activDomain: DomainType|null = useMemo(() => {
       let active:DomainType|null = null;
@@ -73,10 +92,15 @@ const InsightPage: NextPage = () => {
                   : <div className='w-full lg:h-[100px]'></div>
                }
                <SCInsight
-               isLoading={false}
+               isLoading={insightLoading}
                domain={activDomain}
                insight={theInsight}
                isConsoleIntegrated={scConnected || domainHasScAPI}
+               period={insightPeriod}
+               onPeriodChange={setInsightPeriod}
+               compareEnabled={compareEnabled}
+               onCompareToggle={setCompareEnabled}
+               prevPeriodStats={prevPeriodStats}
                />
             </div>
          </div>

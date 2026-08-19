@@ -10,9 +10,17 @@ type SCInsightProps = {
    insight: InsightDataType,
    isLoading: boolean,
    isConsoleIntegrated: boolean,
+   period?: number,
+   onPeriodChange?: (days: number) => void,
+   compareEnabled?: boolean,
+   onCompareToggle?: (val: boolean) => void,
+   prevPeriodStats?: SearchAnalyticsStat[] | null,
 }
 
-const SCInsight = ({ insight, isLoading = true, isConsoleIntegrated = true, domain }: SCInsightProps) => {
+const SCInsight = ({
+   insight, isLoading = true, isConsoleIntegrated = true, domain,
+   period = 30, onPeriodChange, compareEnabled = false, onCompareToggle, prevPeriodStats,
+}: SCInsightProps) => {
    const [activeTab, setActiveTab] = useState<string>('stats');
 
    const insightItems = insight[activeTab as keyof InsightDataType];
@@ -82,11 +90,43 @@ const SCInsight = ({ insight, isLoading = true, isConsoleIntegrated = true, doma
                      />
                   </div>
                </div>
-               {isConsoleIntegrated && (<div className='py-2 text-xs text-center mt-2 lg:text-sm lg:mt-0'>
-                  {startDate && new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(startDate))}
-                  <span className='px-2 inline-block'>-</span>
-                  {endDate && new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(endDate))}
-                  <span className='ml-2'>(Last 30 Days)</span>
+               {isConsoleIntegrated && (
+               <div className='flex items-center gap-3 py-2 text-xs mt-2 lg:text-sm lg:mt-0'>
+                  <div className='text-center'>
+                     {startDate && new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(startDate))}
+                     <span className='px-2 inline-block'>-</span>
+                     {endDate && new Intl.DateTimeFormat('en-US', { dateStyle: 'medium' }).format(new Date(endDate))}
+                  </div>
+                  {onPeriodChange && (
+                     <SelectField
+                        options={[
+                           { label: '7 дней', value: '7' },
+                           { label: '14 дней', value: '14' },
+                           { label: '30 дней', value: '30' },
+                           { label: '90 дней', value: '90' },
+                           { label: '180 дней', value: '180' },
+                           { label: '1 год', value: '365' },
+                           { label: '16 месяцев', value: '480' },
+                        ]}
+                        selected={[String(period)]}
+                        defaultLabel="Период"
+                        updateField={(updated: [string]) => onPeriodChange(parseInt(updated[0], 10))}
+                        multiple={false}
+                        rounded='rounded'
+                     />
+                  )}
+                  {onCompareToggle && (
+                     <button
+                        onClick={() => onCompareToggle(!compareEnabled)}
+                        className={`px-3 py-1 text-xs rounded-full border transition-colors ${
+                           compareEnabled
+                              ? 'bg-indigo-100 border-indigo-300 text-indigo-700'
+                              : 'bg-gray-50 border-gray-200 text-gray-500 hover:bg-gray-100'
+                        }`}
+                     >
+                        {compareEnabled ? '✕ Compare' : 'Compare'}
+                     </button>
+                  )}
                </div>
                )}
             </div>
@@ -96,6 +136,7 @@ const SCInsight = ({ insight, isLoading = true, isConsoleIntegrated = true, doma
                totalKeywords={insight?.keywords?.length || 0}
                totalCountries={insight?.countries?.length || 0}
                totalPages={insight?.pages?.length || 0}
+               prevStats={compareEnabled ? prevPeriodStats || undefined : undefined}
                />
             )}
 

@@ -10,26 +10,53 @@ type InsightStatsProps = {
    totalKeywords: number,
    totalCountries: number,
    totalPages: number,
+   prevStats?: SearchAnalyticsStat[],
 }
 
-const InsightStats = ({ stats = [], totalKeywords = 0, totalPages = 0 }:InsightStatsProps) => {
-    // GSC average position is impression-weighted, not a plain mean of daily averages.
-    const totalStat = useMemo(() => {
-      const totals = stats.reduce((acc, item) => {
-          return {
-            impressions: item.impressions + acc.impressions,
-            clicks: item.clicks + acc.clicks,
-            positionWeighted: (item.position * item.impressions) + acc.positionWeighted,
-          };
-      }, { impressions: 0, clicks: 0, positionWeighted: 0 });
+const computeTotals = (data: SearchAnalyticsStat[]) => {
+   const totals = data.reduce((acc, item) => ({
+      impressions: item.impressions + acc.impressions,
+      clicks: item.clicks + acc.clicks,
+      positionWeighted: (item.position * item.impressions) + acc.positionWeighted,
+   }), { impressions: 0, clicks: 0, positionWeighted: 0 });
+   return {
+      impressions: totals.impressions,
+      clicks: totals.clicks,
+      position: totals.impressions > 0 ? totals.positionWeighted / totals.impressions : 0,
+      ctr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
+   };
+};
 
-      return {
-          impressions: totals.impressions,
-          clicks: totals.clicks,
-          position: totals.impressions > 0 ? totals.positionWeighted / totals.impressions : 0,
-          ctr: totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0,
-      };
-    }, [stats]);
+const calcDelta = (current: number, previous: number): number | null => {
+   if (previous === 0) return current > 0 ? 100 : null;
+   return ((current - previous) / previous) * 100;
+};
+
+type DeltaBadgeProps = {
+   delta: number | null,
+   inverted?: boolean, // true for position where lower = better
+}
+
+const DeltaBadge = ({ delta, inverted = false }: DeltaBadgeProps) => {
+   if (delta === null) return null;
+   const isPositive = inverted ? delta < 0 : delta > 0;
+   const isNegative = inverted ? delta > 0 : delta < 0;
+   const color = isPositive ? 'text-green-600' : isNegative ? 'text-red-500' : 'text-gray-400';
+   const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
+   const formatted = `${arrow} ${Math.abs(Math.round(delta))}%`;
+   return <span className={`block text-xs font-normal mt-1 ${color}`}>{formatted}</span>;
+};
+
+const compact = (n: number) => new Intl.NumberFormat('en-US', {
+   notation: 'compact', compactDisplay: 'short',
+}).format(n || 0).replace('T', 'K');
+
+const InsightStats = ({ stats = [], totalKeywords = 0, totalPages = 0, prevStats }:InsightStatsProps) => {
+    const totalStat = useMemo(() => computeTotals(stats), [stats]);
+    const prevTotalStat = useMemo(
+       () => (prevStats && prevStats.length > 0 ? computeTotals(prevStats) : null),
+       [prevStats],
+    );
 
    const chartData = useMemo(() => {
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -113,21 +140,25 @@ const InsightStats = ({ stats = [], totalKeywords = 0, totalPages = 0 }:InsightS
             className='flex-1 border border-gray-200 px-6 py-5 rounded mb-4 text-2xl text-violet-700 mr-5'
             title={`${formattedNum(totalStat.clicks || 0)} Visits`}>
                <span className=' block text-sm font-normal text-gray-500'>Visits</span>
-               {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(totalStat.clicks || 0).replace('T', 'K')}
+               {compact(totalStat.clicks)}
+               {prevTotalStat && <DeltaBadge delta={calcDelta(totalStat.clicks, prevTotalStat.clicks)} />}
             </div>
             <div
             className='flex-1 border border-gray-200 px-6 py-5 rounded mb-4 text-2xl text-[#1fcdb0] lg:mr-5'
             title={`${formattedNum(totalStat.impressions || 0)} Impressions`}>
                <span className=' block text-sm font-normal text-gray-500'>Impressions</span>
-               {new Intl.NumberFormat('en-US', { notation: 'compact', compactDisplay: 'short' }).format(totalStat.impressions || 0).replace('T', 'K')}
+               {compact(totalStat.impressions)}
+               {prevTotalStat && <DeltaBadge delta={calcDelta(totalStat.impressions, prevTotalStat.impressions)} />}
             </div>
             <div className='flex-1 border border-gray-200 px-6 py-5 rounded mb-4 text-2xl text-gray-500 font-semibold mr-5'>
                <span className=' block text-sm font-normal text-gray-500'>Avg Position</span>
                {totalStat.position ? Math.round(totalStat.position * 10) / 10 : 0}
+               {prevTotalStat && <DeltaBadge delta={calcDelta(totalStat.position, prevTotalStat.position)} inverted />}
             </div>
             <div className='flex-1 border border-gray-200 px-6 py-5 rounded mb-4 text-2xl text-gray-500 font-semibold lg:mr-5'>
                <span className=' block text-sm font-normal text-gray-500'>Avg CTR</span>
                {new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalStat.ctr || 0)}%
+               {prevTotalStat && <DeltaBadge delta={calcDelta(totalStat.ctr, prevTotalStat.ctr)} />}
             </div>
             <div className='flex-1 border border-gray-200 px-6 py-5 rounded mb-4 text-2xl text-gray-500 font-semibold mr-5'>
                <span className=' block text-sm font-normal text-gray-500'>Keywords</span>
