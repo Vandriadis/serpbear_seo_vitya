@@ -158,8 +158,8 @@ const fetchAsync = async (
          return extractOrganicResults([resultTask]);
       }
 
-      // 40602 = Task In Queue, 40603 = Task In Progress — keep polling
-      if (resultTask.status_code === 40602 || resultTask.status_code === 40603) {
+      // 40601 = Task Handed, 40602 = Task In Queue, 40603 = Task In Progress — keep polling
+      if (resultTask.status_code && resultTask.status_code >= 40601 && resultTask.status_code <= 40603) {
          console.log(`[DataForSEO] Task ${taskId} still pending (${resultTask.status_code}), attempt ${attempt + 1}/${MAX_POLL_ATTEMPTS}`);
          continue;
       }
