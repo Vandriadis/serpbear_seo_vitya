@@ -44,6 +44,17 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
    const paginationLimitOptions: SelectionOption[] = Array.from({ length: 10 }, (_, i) => (
       { label: `${i + 1} Page${i > 0 ? 's' : ''}`, value: String(i + 1) }
    ));
+   const depthOptions: SelectionOption[] = [
+      { label: 'Top 10 — cheapest', value: '10' },
+      { label: 'Top 20', value: '20' },
+      { label: 'Top 30', value: '30' },
+      { label: 'Top 50', value: '50' },
+      { label: 'Top 100', value: '100' },
+      { label: 'Top 200', value: '200' },
+      { label: 'Top 500', value: '500' },
+      { label: 'Top 700 — max', value: '700' },
+   ];
+   const isDataForSEO = settings.scraper_type === 'dataforseo';
    const allScrapers: SelectionOption[] = settings.available_scrapers ? settings.available_scrapers : [];
    const scraperOptions: SelectionOption[] = [{ label: 'None', value: 'none' }, ...allScrapers];
    const labelStyle = 'mb-2 font-semibold inline-block text-sm text-gray-700 capitalize';
@@ -67,16 +78,16 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
          {settings.scraper_type !== 'none' && settings.scraper_type !== 'proxy' && (
             <div className="settings__section__secret mb-5">
                <SecretField
-               label='Scraper API Key or Token'
-               placeholder={settings.scraper_type === 'dataforseo' ? 'login:password' : 'API Key/Token'}
+               label={isDataForSEO ? 'DataForSEO Login:Password' : 'Scraper API Key or Token'}
+               placeholder={isDataForSEO ? 'login:password' : 'API Key/Token'}
                value={settings?.scaping_api || ''}
                hasError={settingsError?.type === 'no_api_key'}
                onChange={(value:string) => updateSettings('scaping_api', value)}
                />
-               {settings.scraper_type === 'dataforseo' && (
+               {isDataForSEO && (
                   <small className='text-gray-500 pt-2 block'>
-                     DataForSEO uses Basic auth. Paste your API credentials as <code>login:password</code> (the email and
-                     password from your DataForSEO dashboard), or an already base64 encoded token.
+                     Вставьте логин и пароль из кабинета DataForSEO
+                     через двоеточие: <code>email@example.com:yourPassword</code>
                   </small>
                )}
             </div>
@@ -131,7 +142,27 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
                onChange={(val) => updateSettings('scrape_retry', val)}
                />
             </div>
-            {settings.scraper_type !== 'none' && (
+            {settings.scraper_type !== 'none' && isDataForSEO && (
+               <div className="settings__section__select mb-5">
+                  <SelectField
+                     label='Глубина выдачи (depth)'
+                     options={depthOptions}
+                     selected={[String(settings?.dataforseo_depth || 10)]}
+                     defaultLabel="Select Depth"
+                     updateField={(updated:string[]) => {
+                        if (updated[0]) updateSettings('dataforseo_depth', parseInt(updated[0], 10));
+                     }}
+                     multiple={false}
+                     rounded={'rounded'}
+                     minWidth={220}
+                  />
+                  <small className='text-gray-500 pt-2 block'>
+                     Сколько результатов выдачи запросить у DataForSEO.
+                     Оплата за каждые 10 результатов: Top 10 = 1×, Top 100 = 10×.
+                  </small>
+               </div>
+            )}
+            {settings.scraper_type !== 'none' && !isDataForSEO && (
                <div className="settings__section__select mb-5">
                   <SelectField
                      label='Scrape Strategy'
@@ -146,27 +177,33 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
                   <small className='text-gray-500 pt-2 block'>
                      {(!settings.scrape_strategy || settings.scrape_strategy === 'basic')
                         && 'Scrape only the first page (10 results). Fastest, uses least API credits.'}
-                     {settings.scrape_strategy === 'custom' && 'Scrape a fixed number of pages per keyword on every refresh.'}
-                     {settings.scrape_strategy === 'smart' && 'Scrape the page where the keyword was last seen, plus its neighbors.'}
+                     {settings.scrape_strategy === 'custom'
+                        && 'Scrape a fixed number of pages per keyword on every refresh.'}
+                     {settings.scrape_strategy === 'smart'
+                        && 'Scrape the page where the keyword was last seen, plus its neighbors.'}
                   </small>
                </div>
             )}
-            {settings.scraper_type !== 'none' && settings.scrape_strategy === 'custom' && (
+            {settings.scraper_type !== 'none' && !isDataForSEO && settings.scrape_strategy === 'custom' && (
                <div className="settings__section__select mb-5">
                   <SelectField
                      label='Number of Pages to Scrape'
                      options={paginationLimitOptions}
                      selected={[String(settings?.scrape_pagination_limit || 5)]}
                      defaultLabel="Select Page Count"
-                     updateField={(updated:string[]) => updated[0] && updateSettings('scrape_pagination_limit', parseInt(updated[0], 10))}
+                     updateField={(updated:string[]) => {
+                        if (updated[0]) updateSettings('scrape_pagination_limit', parseInt(updated[0], 10));
+                     }}
                      multiple={false}
                      rounded={'rounded'}
                      minWidth={220}
                   />
-                  <small className='text-gray-500 pt-2 block'>Each page returns up to 10 results. 5 pages = top 50 results checked.</small>
+                  <small className='text-gray-500 pt-2 block'>
+                     Each page returns up to 10 results. 5 pages = top 50 results checked.
+                  </small>
                </div>
             )}
-            {settings.scraper_type !== 'none' && settings.scrape_strategy === 'smart' && (
+            {settings.scraper_type !== 'none' && !isDataForSEO && settings.scrape_strategy === 'smart' && (
                <div className="settings__section__input mb-5">
                   <ToggleField
                      label='Full Fallback: Scrape all pages if not found on nearby pages'
@@ -174,7 +211,8 @@ const ScraperSettings = ({ settings, settingsError, updateSettings }:ScraperSett
                      onChange={(val) => updateSettings('scrape_smart_full_fallback', val)}
                   />
                   <small className='text-gray-500 pt-2 block'>
-                     When enabled, all 10 pages will be scraped if the keyword is not found near its last known position.
+                     When enabled, all 10 pages will be scraped
+                     if the keyword is not found near its last known position.
                   </small>
                </div>
             )}

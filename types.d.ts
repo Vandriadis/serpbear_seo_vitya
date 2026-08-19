@@ -117,6 +117,7 @@ type SettingsType = {
    scrape_strategy?: ScrapeStrategy,
    scrape_pagination_limit?: number,
    scrape_smart_full_fallback?: boolean,
+   dataforseo_depth?: number,
    failed_queue?: string[]
    version?: string,
    screenshot_key?: string,

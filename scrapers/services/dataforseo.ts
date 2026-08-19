@@ -13,10 +13,7 @@ interface DataForSEOTask {
 
 const DATAFORSEO_LIVE_ENDPOINT = 'https://api.dataforseo.com/v3/serp/google/organic/live/advanced';
 const SUCCESS_STATUS = 20000;
-const RESULTS_PER_PAGE = 10;
-const MIN_DEPTH = 10;
-const MAX_DEPTH = 700;
-const SMART_STRATEGY_PAGES = 10;
+const DEFAULT_DEPTH = 10;
 
 /**
  * DataForSEO authenticates with HTTP Basic using the account login (email) and password.
@@ -26,18 +23,6 @@ const buildBasicToken = (apiKey: string): string => {
    const key = (apiKey || '').trim();
    if (!key) { return ''; }
    return key.includes(':') ? Buffer.from(key, 'utf-8').toString('base64') : key;
-};
-
-/**
- * DataForSEO returns the whole SERP in one request and bills per 10 results, so the app's
- * scrape strategy is mapped to the `depth` parameter instead of paginated requests.
- */
-const resolveDepth = (settings: SettingsType): number => {
-   const strategy = settings.scrape_strategy || 'basic';
-   let pages = 1;
-   if (strategy === 'custom') { pages = settings.scrape_pagination_limit || 5; }
-   if (strategy === 'smart') { pages = SMART_STRATEGY_PAGES; }
-   return Math.min(Math.max(pages * RESULTS_PER_PAGE, MIN_DEPTH), MAX_DEPTH);
 };
 
 const dataforseo:ScraperSettings = {
@@ -58,16 +43,16 @@ const dataforseo:ScraperSettings = {
       const country = keyword.country || 'US';
       const countryInfo = countryData[country] || countryData.US;
       const isMobile = keyword.device === 'mobile';
+      const depth = settings.dataforseo_depth || DEFAULT_DEPTH;
 
       const task: Record<string, string | number> = {
          keyword: keyword.keyword,
          language_code: countryInfo[2],
          device: isMobile ? 'mobile' : 'desktop',
          os: isMobile ? 'android' : 'windows',
-         depth: resolveDepth(settings),
+         depth,
       };
 
-      // location_name must match DataForSEO's location list exactly, so it is only used for city level keywords.
       if (keyword.city) {
          task.location_name = `${keyword.city},${countryInfo[0]}`;
       } else {
@@ -79,17 +64,22 @@ const dataforseo:ScraperSettings = {
    resultObjectKey: 'tasks',
    serpExtractor: (content) => {
       const extractedResult = [];
-      const tasks: DataForSEOTask[] = (typeof content === 'string') ? JSON.parse(content) : content as unknown as DataForSEOTask[];
+      const tasks: DataForSEOTask[] = (
+         typeof content === 'string'
+      ) ? JSON.parse(content) : content as unknown as DataForSEOTask[];
       const [task] = Array.isArray(tasks) ? tasks : [];
 
       if (!task) {
          throw new Error('DataForSEO returned an empty task list.');
       }
       if (task.status_code && task.status_code !== SUCCESS_STATUS) {
-         throw new Error(`DataForSEO Error ${task.status_code}: ${task.status_message || 'Unknown task error'}`);
+         const msg = task.status_message || 'Unknown task error';
+         throw new Error(`DataForSEO Error ${task.status_code}: ${msg}`);
       }
 
-      const items = (task.result && task.result[0] && task.result[0].items) || [];
+      const items = (
+         task.result && task.result[0] && task.result[0].items
+      ) || [];
       for (const item of items) {
          if (item.type === 'organic' && item.title && item.url) {
             extractedResult.push({
