@@ -4,11 +4,16 @@ type KeywordPositionProps = {
    position: number,
    updating?: boolean,
    type?: string,
+   resultCount?: number,
 }
 
-const KeywordPosition = ({ position = 0, type = '', updating = false }:KeywordPositionProps) => {
+const KeywordPosition = ({ position = 0, type = '', updating = false, resultCount }:KeywordPositionProps) => {
    if (!updating && position === 0) {
-      return <span className='text-gray-400' title='Not found in SERP'>{'—'}</span>;
+      const label = resultCount ? `>${resultCount}` : '—';
+      const title = resultCount
+         ? `Not found in top ${resultCount} organic results`
+         : 'Not found in SERP';
+      return <span className='text-gray-400' title={title}>{label}</span>;
    }
    if (updating && type !== 'sc') {
       return <span title='Updating Keyword Position'><Icon type="loading" /></span>;

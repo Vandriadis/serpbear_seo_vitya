@@ -133,14 +133,28 @@ const KeywordDetails = ({ keyword, closeDetails }:KeywordDetailsProps) => {
                      <div className="keywordDetails__section__head flex justify-between items-center pb-4 mb-4 border-b border-b-slate-200">
                         <h3 className=' font-bold text-gray-700 lg:text-lg'>Google Search Result
                            <a className='text-gray-400 hover:text-indigo-600 inline-block ml-1 px-2 py-1'
-                              href={`https://www.google.com/search?q=${encodeURI(keyword.keyword)}`}
+                              href={`https://www.google.com/search?q=${encodeURIComponent(keyword.keyword)}`
+                                 + `&hl=${countries[keyword.country]?.[2] || 'en'}`
+                                 + `&gl=${keyword.country}`}
                               target="_blank"
-                              rel='noreferrer'>
+                              rel='noreferrer'
+                              title='Open in Google (with country/language)'>
                               <Icon type='link' size={14} />
                            </a>
                         </h3>
                         <span className=' text-xs text-gray-500'>{dayjs(updatedDate).format('MMMM D, YYYY')}</span>
                      </div>
+                     {keyword.position === 0 && keywordSearchResult.length > 0 && (
+                        <div className='mb-4 p-3 rounded bg-orange-50 border border-orange-200 text-xs text-orange-700'>
+                           <strong>Домен не найден</strong> среди {keywordSearchResult.length} органических
+                           результатов выдачи. Ниже показаны сайты, которые занимают эти позиции.
+                        </div>
+                     )}
+                     {keyword.position === 0 && keywordSearchResult.length === 0 && (
+                        <div className='mb-4 p-3 rounded bg-gray-50 border border-gray-200 text-xs text-gray-500'>
+                           Нет данных о выдаче. Запустите обновление позиций.
+                        </div>
+                     )}
                      {skippedCount > 0 && (
                         <div className='mb-4 p-3 rounded bg-blue-50 border border-blue-100 text-xs text-blue-600'>
                            {scrapedCount} result{scrapedCount !== 1 ? 's' : ''} scraped
