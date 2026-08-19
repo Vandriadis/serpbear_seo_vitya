@@ -318,7 +318,7 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
    const useAsyncFetcher = scraperObj?.asyncFetcher && (settings.dataforseo_mode || 'async') === 'async';
    if (useAsyncFetcher) {
       try {
-         const extracted = await scraperObj.asyncFetcher(keyword, settings, countries);
+         const extracted = await scraperObj!.asyncFetcher!(keyword, settings, countries);
          console.log(`[DataForSEO] ${keyword.keyword}: got ${extracted.length} results, looking for "${keyword.domain}"`);
          if (extracted.length > 0 && extracted.length <= 5) {
             console.log('[DataForSEO] All results:', extracted.map((r) => `${r.position}. ${r.url}`).join(' | '));
