@@ -107,7 +107,11 @@ export const updateKeywordPosition = async (keywordRaw:Keyword, updatedKeyword: 
                lastResult: Array.isArray(updatedKeyword.result) ? JSON.stringify(updatedKeyword.result) : updatedKeyword.result,
                history: JSON.stringify(history),
             });
-            console.log('[SUCCESS] Updating the Keyword: ', keyword.keyword);
+            if (updatedKeyword.error) {
+               console.log('[ERROR] Updating the Keyword with scrape error: ', keyword.keyword, updatedKeyword.error);
+            } else {
+               console.log('[SUCCESS] Updating the Keyword: ', keyword.keyword);
+            }
             updated = { ...keyword, ...updatedVal, lastUpdateError: JSON.parse(updatedVal.lastUpdateError) };
          } catch (error) {
             console.log('[ERROR] Updating SERP for Keyword', keyword.keyword, error);

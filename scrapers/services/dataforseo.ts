@@ -116,8 +116,12 @@ const fetchAsync = async (
    });
    const postBody: DataForSEOResponse = await postRes.json();
 
+   if (postBody.status_code && postBody.status_code !== SUCCESS_STATUS) {
+      throw new Error(`DataForSEO Task POST ${postBody.status_code}: ${postBody.status_message || 'Unknown API error'}`);
+   }
+
    if (!postBody.tasks || !postBody.tasks[0]) {
-      throw new Error('DataForSEO Task POST returned empty tasks.');
+      throw new Error(`DataForSEO Task POST returned empty tasks. API message: ${postBody.status_message || 'Unknown'}`);
    }
    const postedTask = postBody.tasks[0];
    if (postedTask.status_code !== TASK_CREATED_STATUS) {
@@ -137,6 +141,11 @@ const fetchAsync = async (
          headers,
       });
       const getBody: DataForSEOResponse = await getRes.json();
+
+      if (getBody.status_code && getBody.status_code !== SUCCESS_STATUS) {
+         throw new Error(`DataForSEO Task GET ${getBody.status_code}: ${getBody.status_message || 'Unknown API error'}`);
+      }
+
       const resultTask = getBody.tasks && getBody.tasks[0];
 
       if (!resultTask) { continue; }
