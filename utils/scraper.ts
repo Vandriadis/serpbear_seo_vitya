@@ -311,10 +311,9 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
    };
    const scraperType = settings?.scraper_type || '';
    const scraperObj = allScrapers.find((scraper:ScraperSettings) => scraper.id === scraperType);
-   const nativePagination: ScraperPagination = { start: 0, num: 100, page: 1 };
-   const scraperClient = getScraperClient(keyword, settings, scraperObj, nativePagination);
 
-   // If the scraper provides a custom async fetcher (e.g. DataForSEO async mode), use it.
+   // If the scraper provides a custom async fetcher (e.g. DataForSEO async mode), use it
+   // BEFORE creating the default scraperClient to avoid a duplicate paid request.
    const useAsyncFetcher = scraperObj?.asyncFetcher && (settings.dataforseo_mode || 'async') === 'async';
    if (useAsyncFetcher) {
       try {
@@ -343,6 +342,8 @@ export const scrapeKeywordFromGoogle = async (keyword:KeywordType, settings:Sett
       return refreshedResults;
    }
 
+   const nativePagination: ScraperPagination = { start: 0, num: 100, page: 1 };
+   const scraperClient = getScraperClient(keyword, settings, scraperObj, nativePagination);
    if (!scraperClient) { return false; }
 
    let scraperError:any = null;
