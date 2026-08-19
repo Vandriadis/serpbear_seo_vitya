@@ -37,12 +37,24 @@ type DeltaBadgeProps = {
    inverted?: boolean, // true for position where lower = better
 }
 
-const DeltaBadge = ({ delta, inverted = false }: DeltaBadgeProps) => {
-   if (delta === null) return null;
+const getDeltaColor = (delta: number, inverted: boolean): string => {
    const isPositive = inverted ? delta < 0 : delta > 0;
    const isNegative = inverted ? delta > 0 : delta < 0;
-   const color = isPositive ? 'text-green-600' : isNegative ? 'text-red-500' : 'text-gray-400';
-   const arrow = delta > 0 ? '▲' : delta < 0 ? '▼' : '';
+   if (isPositive) return 'text-green-600';
+   if (isNegative) return 'text-red-500';
+   return 'text-gray-400';
+};
+
+const getDeltaArrow = (delta: number): string => {
+   if (delta > 0) return '▲';
+   if (delta < 0) return '▼';
+   return '';
+};
+
+const DeltaBadge = ({ delta, inverted = false }: DeltaBadgeProps) => {
+   if (delta === null) return null;
+   const color = getDeltaColor(delta, inverted);
+   const arrow = getDeltaArrow(delta);
    const formatted = `${arrow} ${Math.abs(Math.round(delta))}%`;
    return <span className={`block text-xs font-normal mt-1 ${color}`}>{formatted}</span>;
 };
