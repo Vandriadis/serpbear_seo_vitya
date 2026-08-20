@@ -22,13 +22,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
    return res.status(502).json({ error: 'Unrecognized Route.' });
 }
 
+const resolveDomainName = (req: NextApiRequest): string | undefined => {
+   if (typeof req.query.domain === 'string') {
+      return req.query.domain;
+   }
+   if (typeof req.body?.domain === 'string') {
+      return req.body.domain;
+   }
+   return undefined;
+};
+
 const refreshDomainHealth = async (req: NextApiRequest, res: NextApiResponse<DomainHealthRes>) => {
-   const domainName = typeof req.query.domain === 'string'
-      ? req.query.domain
-      : (typeof req.body?.domain === 'string' ? req.body.domain : undefined);
+   const domainName = resolveDomainName(req);
 
    try {
-      const domains = await checkDomainsHealth(domainName || undefined);
+      const domains = await checkDomainsHealth(domainName);
       const formatted = domains.map((d) => ({
          ...d,
          tags: parseDomainTags(d.tags),
