@@ -90,4 +90,4 @@ const RefreshCWIcon = forwardRef<AnimatedIconHandle, RefreshCWIconProps>(
 
 RefreshCWIcon.displayName = 'RefreshCWIcon';
 
-export { RefreshCWIcon };
+export default RefreshCWIcon;

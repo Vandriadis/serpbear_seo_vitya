@@ -84,4 +84,4 @@ const CircleXIcon = forwardRef<AnimatedIconHandle, CircleXIconProps>(
 
 CircleXIcon.displayName = 'CircleXIcon';
 
-export { CircleXIcon };
+export default CircleXIcon;

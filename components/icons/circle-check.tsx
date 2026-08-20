@@ -94,4 +94,4 @@ const CircleCheckIcon = forwardRef<AnimatedIconHandle, CircleCheckIconProps>(
 
 CircleCheckIcon.displayName = 'CircleCheckIcon';
 
-export { CircleCheckIcon };
+export default CircleCheckIcon;

@@ -123,4 +123,4 @@ const ActivityIcon = forwardRef<AnimatedIconHandle, AnimatedIconProps>(
 
 ActivityIcon.displayName = 'ActivityIcon';
 
-export { ActivityIcon };
+export default ActivityIcon;

@@ -2,10 +2,10 @@ import dayjs from 'dayjs';
 import type { MouseEvent } from 'react';
 import TimeAgo from 'react-timeago';
 import { useRefreshDomainHealth } from '../../services/domains';
-import { ActivityIcon } from '../icons/activity';
-import { CircleXIcon } from '../icons/circle-x';
-import { LoaderCircleIcon } from '../icons/loader-circle';
-import { RefreshCWIcon } from '../icons/refresh-cw';
+import ActivityIcon from '../icons/activity';
+import CircleXIcon from '../icons/circle-x';
+import LoaderCircleIcon from '../icons/loader-circle';
+import RefreshCWIcon from '../icons/refresh-cw';
 
 type DomainAliveStatusProps = {
    domain: DomainType,

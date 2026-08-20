@@ -103,4 +103,4 @@ const LoaderCircleIcon = forwardRef<AnimatedIconHandle, LoaderCircleIconProps>(
 
 LoaderCircleIcon.displayName = 'LoaderCircleIcon';
 
-export { LoaderCircleIcon };
+export default LoaderCircleIcon;
