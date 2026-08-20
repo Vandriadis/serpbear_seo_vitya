@@ -32,6 +32,10 @@ type DomainType = {
    scrape_pagination_limit?: number,
    scrape_smart_full_fallback?: boolean,
    subdomain_matching?: string,
+   alive?: boolean | null,
+   alive_checked_at?: string,
+   alive_status_code?: number | null,
+   alive_error?: string,
 }
 
 type KeywordHistory = {

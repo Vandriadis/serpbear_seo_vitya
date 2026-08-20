@@ -41,6 +41,7 @@ const API_KEY_ALLOWED_ROUTES = [
    'POST:/api/searchconsole',
    'GET:/api/searchconsole',
    'GET:/api/insight',
+   'POST:/api/domain-health',
 ];
 
 const normalizePath = (url?: string): string => (url || '').replace(/\?(.*)/, '');

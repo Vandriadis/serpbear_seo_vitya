@@ -190,6 +190,7 @@ const Domains: NextPage = () => {
                            thumb={domainThumbs[domain.domain]}
                            updateThumb={manuallyUpdateThumb}
                            onAttachTags={(d: DomainType) => setAttachTagsDomain(d)}
+                           canRefreshHealth={canWrite}
                            />;
                })}
                {isLoading && (

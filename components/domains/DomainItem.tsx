@@ -3,6 +3,7 @@ import TimeAgo from 'react-timeago';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import Icon from '../common/Icon';
+import DomainAliveStatus from './DomainAliveStatus';
 
 type DomainItemProps = {
    domain: DomainType,
@@ -11,10 +12,11 @@ type DomainItemProps = {
    thumb: string,
    updateThumb: Function,
    onAttachTags: Function,
+   canRefreshHealth?: boolean,
 }
 
 const DomainItem = ({
-   domain, selected, isConsoleIntegrated = false, thumb, updateThumb, onAttachTags,
+   domain, selected, isConsoleIntegrated = false, thumb, updateThumb, onAttachTags, canRefreshHealth = true,
 }: DomainItemProps) => {
    const {
       keywordsUpdated, slug, keywordCount = 0, avgPosition = 0,
@@ -24,9 +26,9 @@ const DomainItem = ({
    return (
       <div className={`domItem bg-white border rounded w-full text-sm mb-3 hover:border-indigo-200 ${selected ? '' : ''}`}>
          <div className="flex flex-col lg:flex-row lg:items-stretch">
-            <Link href={`/domain/${slug}`} passHref={true}>
-               <a className={`flex flex-1 p-3 items-center min-w-0 ${!isConsoleIntegrated ? 'lg:basis-2/5' : ''}`}>
-                  <div className="group domain_thumb w-12 h-12 mr-3 bg-slate-100 rounded
+            <div className={`flex flex-1 p-3 items-center min-w-0 ${!isConsoleIntegrated ? 'lg:basis-2/5' : ''}`}>
+               <Link href={`/domain/${slug}`} passHref={true}>
+                  <a className="group domain_thumb w-12 h-12 mr-3 bg-slate-100 rounded
                      border border-gray-200 overflow-hidden flex justify-center relative shrink-0">
                      <button
                         className="absolute right-0 top-0 text-gray-400 p-0.5 transition-all
@@ -41,32 +43,41 @@ const DomainItem = ({
                         src={thumb || `https://www.google.com/s2/favicons?domain=${domain.domain}&sz=64`}
                         alt={domain.domain}
                      />
+                  </a>
+               </Link>
+               <div className="domain_details flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5 min-w-0">
+                     <Link href={`/domain/${slug}`} passHref={true}>
+                        <a className="font-semibold text-sm truncate min-w-0" title={domain.domain}>{domain.domain}</a>
+                     </Link>
+                     <DomainAliveStatus domain={domain} canRefresh={canRefreshHealth} compact={true} />
                   </div>
-                  <div className="domain_details flex-1 min-w-0">
-                     <h3 className="font-semibold text-sm mb-0.5 truncate" title={domain.domain}>{domain.domain}</h3>
-                     {keywordsUpdated && (
-                        <span className="text-gray-500 text-xs">
-                           Updated <TimeAgo title={dayjs(keywordsUpdated).format('DD-MMM-YYYY, hh:mm:ss A')} date={keywordsUpdated} />
-                        </span>
-                     )}
-                     {tags.length > 0 && (
-                        <div className="mt-1.5 flex flex-wrap gap-1">
-                           {tags.map((tag) => (
-                              <span
-                                 key={tag}
-                                 className="inline-flex items-center text-[10px] leading-none px-1.5 py-0.5
-                                    rounded bg-indigo-50 text-indigo-600 border border-indigo-100"
-                              >
-                                 {tag}
-                              </span>
-                           ))}
-                        </div>
-                     )}
-                  </div>
-               </a>
-            </Link>
+                  <Link href={`/domain/${slug}`} passHref={true}>
+                     <a className="block">
+                        {keywordsUpdated && (
+                           <span className="text-gray-500 text-xs">
+                              Updated <TimeAgo title={dayjs(keywordsUpdated).format('DD-MMM-YYYY, hh:mm:ss A')} date={keywordsUpdated} />
+                           </span>
+                        )}
+                        {tags.length > 0 && (
+                           <div className="mt-1.5 flex flex-wrap gap-1">
+                              {tags.map((tag) => (
+                                 <span
+                                    key={tag}
+                                    className="inline-flex items-center text-[10px] leading-none px-1.5 py-0.5
+                                       rounded bg-indigo-50 text-indigo-600 border border-indigo-100"
+                                 >
+                                    {tag}
+                                 </span>
+                              ))}
+                           </div>
+                        )}
+                     </a>
+                  </Link>
+               </div>
+            </div>
 
-            <div className="flex items-center gap-2 px-3 pb-3 lg:pb-0 lg:pr-2">
+            <div className="flex items-center gap-2 px-3 pb-3 lg:pb-0 lg:pr-2 self-center">
                <button
                   type="button"
                   title="Attach tags"

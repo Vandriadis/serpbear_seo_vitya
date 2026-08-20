@@ -182,3 +182,51 @@ export function useDeleteDomain(onSuccess:Function) {
       },
    });
 }
+
+export function useRefreshDomainHealth(onSuccess?: Function) {
+   const queryClient = useQueryClient();
+   return useMutation(async (domainName?: string) => {
+      const headers = new Headers({ 'Content-Type': 'application/json', Accept: 'application/json' });
+      const url = domainName
+         ? `${window.location.origin}/api/domain-health?domain=${encodeURIComponent(domainName)}`
+         : `${window.location.origin}/api/domain-health`;
+      const res = await fetch(url, { method: 'POST', headers });
+      const responseObj = await res.json();
+      if (res.status >= 400 && res.status < 600) {
+         throw new Error(responseObj?.error || 'Bad response from server');
+      }
+      return responseObj as { domains: DomainType[] };
+   }, {
+      onSuccess: async (data) => {
+         const updated = data?.domains || [];
+         const count = updated.length;
+         toast(count === 1 ? 'Domain status updated!' : `${count} domains checked!`, { icon: '✔️' });
+         if (updated.length > 0) {
+            queryClient.setQueriesData<{ domains: DomainType[] }>(['domains'], (current) => {
+               if (!current?.domains) { return current as any; }
+               const byName = new Map(updated.map((d) => [d.domain, d]));
+               return {
+                  ...current,
+                  domains: current.domains.map((d) => {
+                     const next = byName.get(d.domain);
+                     if (!next) { return d; }
+                     return {
+                        ...d,
+                        alive: next.alive,
+                        alive_checked_at: next.alive_checked_at,
+                        alive_status_code: next.alive_status_code,
+                        alive_error: next.alive_error,
+                     };
+                  }),
+               };
+            });
+         }
+         if (onSuccess) onSuccess(data);
+         queryClient.invalidateQueries(['domains']);
+         queryClient.invalidateQueries(['domain']);
+      },
+      onError: (error: any) => {
+         toast(error?.message || 'Error checking domain status', { icon: '⚠️' });
+      },
+   });
+}

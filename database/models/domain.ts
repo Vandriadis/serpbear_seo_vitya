@@ -53,6 +53,18 @@ class Domain extends Model {
 
    @Column({ type: DataType.STRING, allowNull: true, defaultValue: '' })
    subdomain_matching!: string;
+
+   @Column({ type: DataType.BOOLEAN, allowNull: true, defaultValue: null })
+   alive!: boolean | null;
+
+   @Column({ type: DataType.STRING, allowNull: true, defaultValue: '' })
+   alive_checked_at!: string;
+
+   @Column({ type: DataType.INTEGER, allowNull: true, defaultValue: null })
+   alive_status_code!: number | null;
+
+   @Column({ type: DataType.STRING, allowNull: true, defaultValue: '' })
+   alive_error!: string;
 }
 
 export default Domain;

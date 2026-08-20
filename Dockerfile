@@ -38,24 +38,29 @@ COPY --from=builder --chown=nextjs:nodejs /app/entrypoint.sh ./entrypoint.sh
 # - croner, cryptr, dotenv: used by cron.js (runs outside Next.js)
 # - @googleapis/searchconsole: Google API packages have complex module
 #   resolution that Next.js 12 file tracing (nft) does not follow
-# - sequelize-cli: used by entrypoint.sh for DB migrations
+# - sequelize + sqlite3 + sequelize-cli: entrypoint migrations
 # - concurrently: process manager for server.js + cron.js
-RUN chmod +x /app/entrypoint.sh && \
+RUN apk add --no-cache --virtual .build-deps python3 make g++ && \
+    chmod +x /app/entrypoint.sh && \
     rm -f package.json && npm init -y && \
     npm install --no-package-lock \
       croner@9.0.0 \
       cryptr@6.4.0 \
       dotenv@16.0.3 \
       @googleapis/searchconsole@1.0.5 \
+      sequelize@6.37.7 \
+      sqlite3@5.1.7 \
       sequelize-cli@6.6.5 \
       concurrently@7.6.0 \
       @isaacs/ttlcache@1.4.1 && \
+    apk del .build-deps && \
     npm cache clean --force && \
-    rm -rf /tmp/* /root/.npm
+    rm -rf /tmp/* /root/.npm && \
+    chown -R nextjs:nodejs /app/node_modules /app/package.json
 
 USER nextjs
 
 EXPOSE 3000
 
 ENTRYPOINT ["/app/entrypoint.sh"]
-CMD ["npx", "concurrently", "node server.js", "node cron.js"]
+CMD ["npx", "concurrently", "-k", "-n", "web,cron", "-c", "cyan,magenta", "node server.js", "node cron.js"]

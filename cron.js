@@ -168,6 +168,43 @@ const runAppCronJobs = () => {
          });
       }, { scheduled: true });
    }
+
+   // Domain alive/health check every 30 minutes (+ once after startup)
+   const runDomainHealthCheck = () => {
+      const fetchOpts = { method: 'POST', headers: { Authorization: `Bearer ${process.env.APIKEY}` } };
+      return fetch(`${INTERNAL_BASE_URL}/api/domain-health`, fetchOpts)
+      .then((res) => {
+         if (!res.ok) {
+            throw new Error(`HTTP ${res.status}`);
+         }
+         return res.json();
+      })
+      .then((data) => console.log('[Domain Health]', data?.domains?.length ?? 0, 'checked'))
+      .catch((err) => {
+         console.log('ERROR Making Domain Health Cron Request..');
+         console.log(err);
+         throw err;
+      });
+   };
+
+   new Cron('0 */30 * * * *', () => {
+      runDomainHealthCheck().catch(() => {});
+   }, { scheduled: true });
+
+   // First check shortly after boot (retry while Next.js is still starting)
+   const runDomainHealthOnStartup = (attempt = 1) => {
+      const maxAttempts = 12;
+      runDomainHealthCheck()
+      .catch(() => {
+         if (attempt < maxAttempts) {
+            console.log(`[Domain Health] Server not ready, retry ${attempt}/${maxAttempts} in 5s...`);
+            setTimeout(() => runDomainHealthOnStartup(attempt + 1), 5000);
+         } else {
+            console.log('[Domain Health] Giving up startup check; cron will retry every 30 minutes.');
+         }
+      });
+   };
+   setTimeout(() => runDomainHealthOnStartup(), 8000);
 };
 
 runAppCronJobs();

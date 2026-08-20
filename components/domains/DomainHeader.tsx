@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useRefreshKeywords } from '../../services/keywords';
 import Icon from '../common/Icon';
 import SelectField from '../common/SelectField';
+import DomainAliveStatus from './DomainAliveStatus';
 
 type DomainHeaderProps = {
    domain: DomainType,
@@ -39,8 +40,15 @@ const DomainHeader = (
    return (
       <div className='domain_keywords_head w-full '>
          <div>
-            <h1 className="hidden lg:block text-xl font-bold my-3" data-testid="domain-header">
-               {domain && domain.domain && <><i className=' capitalize font-bold not-italic'>{domain.domain.charAt(0)}</i>{domain.domain.slice(1)}</>}
+            <h1 className="hidden lg:flex items-center gap-3 text-xl font-bold my-3" data-testid="domain-header">
+               {domain && domain.domain && (
+                  <>
+                     <span>
+                        <i className=' capitalize font-bold not-italic'>{domain.domain.charAt(0)}</i>{domain.domain.slice(1)}
+                     </span>
+                     <DomainAliveStatus domain={domain} canRefresh={!readOnly} />
+                  </>
+               )}
             </h1>
             <div className='domain_selector bg-white mt-2 lg:hidden'>
                <SelectField
@@ -51,6 +59,9 @@ const DomainHeader = (
                multiple={false}
                rounded={'rounded'}
                />
+            </div>
+            <div className="lg:hidden mt-2 flex items-center">
+               <DomainAliveStatus domain={domain} canRefresh={!readOnly} />
             </div>
          </div>
       <div className='flex w-full justify-between mt-4 lg:mt-0'>
@@ -143,7 +154,6 @@ const DomainHeader = (
             )}
             {isConsole && (
                <div className='text-xs pl-4 ml-2 border-l border-gray-200 relative'>
-                  {/* <span className='hidden lg:inline-block'>Data From Last: </span> */}
                   <span className='block cursor-pointer py-3' onClick={() => setShowSCDates(!ShowSCDates)}>
                      <Icon type='date' size={13} classes="mr-1" /> {daysName(scFilter)}
                   </span>

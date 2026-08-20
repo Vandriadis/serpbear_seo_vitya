@@ -10,6 +10,10 @@ export const dummyDomain = {
    notification: true,
    notification_interval: 'daily',
    notification_emails: '',
+   alive: true,
+   alive_checked_at: '2022-11-11T10:00:32.243',
+   alive_status_code: 200,
+   alive_error: '',
 };
 
 export const dummyKeywords = [
