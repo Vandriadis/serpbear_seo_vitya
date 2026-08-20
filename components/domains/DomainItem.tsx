@@ -27,30 +27,32 @@ const DomainItem = ({
       <div className={`domItem bg-white border rounded w-full text-sm mb-3 hover:border-indigo-200 ${selected ? '' : ''}`}>
          <div className="flex flex-col lg:flex-row lg:items-stretch">
             <div className={`flex flex-1 p-3 items-center min-w-0 ${!isConsoleIntegrated ? 'lg:basis-2/5' : ''}`}>
-               <Link href={`/domain/${slug}`} passHref={true}>
-                  <a className="group domain_thumb w-12 h-12 mr-3 bg-slate-100 rounded
-                     border border-gray-200 overflow-hidden flex justify-center relative shrink-0">
-                     <button
-                        className="absolute right-0 top-0 text-gray-400 p-0.5 transition-all
-                        invisible opacity-0 group-hover:visible group-hover:opacity-100 hover:text-gray-600 z-10"
-                        title="Reload Website Screenshot"
-                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateThumb(domain.domain); }}
-                     >
-                        <Icon type="reload" size={10} />
-                     </button>
-                     <img
-                        className={`self-center ${!thumb ? 'max-w-[28px]' : ''}`}
-                        src={thumb || `https://www.google.com/s2/favicons?domain=${domain.domain}&sz=64`}
-                        alt={domain.domain}
-                     />
-                  </a>
-               </Link>
+               <div className="flex flex-col items-center mr-3 shrink-0">
+                  <Link href={`/domain/${slug}`} passHref={true}>
+                     <a className="group domain_thumb w-12 h-12 bg-slate-100 rounded
+                        border border-gray-200 overflow-hidden flex justify-center relative">
+                        <button
+                           className="absolute right-0 top-0 text-gray-400 p-0.5 transition-all
+                           invisible opacity-0 group-hover:visible group-hover:opacity-100 hover:text-gray-600 z-10"
+                           title="Reload Website Screenshot"
+                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); updateThumb(domain.domain); }}
+                        >
+                           <Icon type="reload" size={10} />
+                        </button>
+                        <img
+                           className={`self-center ${!thumb ? 'max-w-[28px]' : ''}`}
+                           src={thumb || `https://www.google.com/s2/favicons?domain=${domain.domain}&sz=64`}
+                           alt={domain.domain}
+                        />
+                     </a>
+                  </Link>
+                  <DomainAliveStatus domain={domain} canRefresh={canRefreshHealth} underThumb={true} />
+               </div>
                <div className="domain_details flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-0.5 min-w-0">
                      <Link href={`/domain/${slug}`} passHref={true}>
                         <a className="font-semibold text-sm truncate min-w-0" title={domain.domain}>{domain.domain}</a>
                      </Link>
-                     <DomainAliveStatus domain={domain} canRefresh={canRefreshHealth} compact={true} />
                   </div>
                   <Link href={`/domain/${slug}`} passHref={true}>
                      <a className="block">
