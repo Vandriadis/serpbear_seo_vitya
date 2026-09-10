@@ -37,11 +37,20 @@ const KeywordDetails = ({ keyword, closeDetails }:KeywordDetailsProps) => {
    useOnKey('Escape', closeDetails);
 
    useLayoutEffect(() => {
+      // Prefer scrolling to the found domain result; otherwise jump to SERP list itself.
       if (keyword.position < 100 && keyword.position > 0 && searchResultFound?.current) {
          searchResultFound.current.scrollIntoView({
             behavior: 'smooth',
             block: 'center',
             inline: 'start',
+         });
+         return;
+      }
+      if (searchResultContainer?.current) {
+         searchResultContainer.current.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+            inline: 'nearest',
          });
       }
    }, [keywordSearchResult, keyword.position]);
@@ -129,7 +138,7 @@ const KeywordDetails = ({ keyword, closeDetails }:KeywordDetailsProps) => {
                            <Chart labels={chartData.labels} series={chartData.series} />
                      </div>
                   </div>
-                  <div className='keywordDetails__section mt-10'>
+                  <div className='keywordDetails__section mt-10' id="keyword-serp-results">
                      <div className="keywordDetails__section__head flex justify-between items-center pb-4 mb-4 border-b border-b-slate-200">
                         <h3 className=' font-bold text-gray-700 lg:text-lg'>Google Search Result
                            <a className='text-gray-400 hover:text-indigo-600 inline-block ml-1 px-2 py-1'

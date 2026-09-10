@@ -201,6 +201,22 @@ const Keyword = (props: KeywordProps) => {
             </div>
          )}
 
+         <div className={`absolute mt-[-10px] top-2 flex items-center gap-1
+            lg:static lg:mt-0 lg:top-0 lg:right-0 lg:flex-none lg:ml-2
+            ${readOnly ? 'right-4' : 'right-12'}`}>
+            <button
+               type="button"
+               title="View SERP results / Посмотреть выдачу"
+               className="keyword_serp_btn inline-flex items-center gap-1 text-[11px] font-semibold leading-none
+                  px-2 py-1.5 rounded border border-indigo-100 text-indigo-600 bg-indigo-50
+                  hover:bg-indigo-100 hover:border-indigo-200 transition"
+               onClick={() => showKeywordDetails()}
+            >
+               <Icon type="eye" size={13} />
+               <span>SERP</span>
+            </button>
+         </div>
+
          {!readOnly && (
             <div className='absolute right-4 mt-[-10px] top-2 lg:flex-1 lg:basis-5 lg:grow-0 lg:shrink-0 lg:relative lg:right-[-10px]'>
                <button
@@ -210,6 +226,10 @@ const Keyword = (props: KeywordProps) => {
                </button>
                {showOptions && (
                   <ul className='keyword_options customShadow absolute w-[180px] right-0 bg-white rounded border z-20'>
+                     <li>
+                        <a className={optionsButtonStyle} onClick={() => { showKeywordDetails(); setShowOptions(false); }}>
+                        <span className=' bg-indigo-100 text-blue-700 px-1 rounded'><Icon type="eye" size={11} /></span> View SERP</a>
+                     </li>
                      <li>
                         <a className={optionsButtonStyle} onClick={() => { refreshkeyword([ID]); setShowOptions(false); }}>
                         <span className=' bg-indigo-100 text-blue-700 px-1 rounded'><Icon type="reload" size={11} /></span> Refresh Keyword</a>
